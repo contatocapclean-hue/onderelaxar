@@ -20,7 +20,7 @@ async function assertOwnerOrAdmin(id: string) {
     .single();
 
   const { data: userProfile } = await supabase!.from("profiles").select("role").eq("id", user.id).single();
-  const isAdmin = userProfile?.role === "admin";
+  const isAdmin = userProfile?.role === "admin" || userProfile?.role === "super_admin";
 
   return { supabase, ok: profile?.user_id === user.id || isAdmin, isAdmin };
 }

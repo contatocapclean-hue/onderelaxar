@@ -23,7 +23,11 @@ export default async function AdminUsuariosPage() {
                 <td className="p-3 text-muted-foreground">{u.email}</td>
                 <td className="p-3">
                   <span className="rounded-full bg-beige px-2.5 py-1 text-xs">
-                    {u.role === "admin" ? "Administrador" : "Profissional"}
+                    {u.role === "super_admin"
+                      ? "Administrador master"
+                      : u.role === "admin"
+                        ? "Administrador"
+                        : "Profissional"}
                   </span>
                 </td>
                 <td className="p-3 text-muted-foreground">

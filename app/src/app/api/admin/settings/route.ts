@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperAdmin } from "@/lib/require-admin";
 
 export async function PATCH(request: NextRequest) {
-  const result = await requireAdmin();
+  const result = await requireSuperAdmin();
   if ("error" in result) return NextResponse.json({ error: result.error }, { status: 400 });
 
   const body = await request.json();

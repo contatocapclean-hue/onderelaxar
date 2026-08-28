@@ -136,7 +136,7 @@ export interface MockUser {
   id: string;
   name: string;
   email: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "super_admin";
   createdAt: string;
 }
 
