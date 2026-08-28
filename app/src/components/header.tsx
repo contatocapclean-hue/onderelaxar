@@ -1,7 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getCurrentAuthUser, isCurrentUserAdmin } from "@/lib/data";
+import { HeaderLogoutButton } from "@/components/header-logout-button";
 
-export function Header() {
+export async function Header() {
+  const user = await getCurrentAuthUser();
+  const isAdmin = user ? await isCurrentUserAdmin() : false;
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
       <div className="container-page flex h-20 items-center justify-between gap-4">
@@ -29,18 +34,35 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/entrar"
-            className="hidden sm:inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-foreground hover:bg-beige-soft transition-colors"
-          >
-            Entrar
-          </Link>
-          <Link
-            href="/cadastro"
-            className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
-          >
-            Criar meu perfil
-          </Link>
+          {user ? (
+            <>
+              <span className="hidden lg:inline text-sm text-muted-foreground">
+                Olá, {user.name || user.email}
+              </span>
+              <Link
+                href={isAdmin ? "/admin" : "/painel"}
+                className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
+              >
+                {isAdmin ? "Painel administrativo" : "Meu painel"}
+              </Link>
+              <HeaderLogoutButton />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/entrar"
+                className="hidden sm:inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-foreground hover:bg-beige-soft transition-colors"
+              >
+                Entrar
+              </Link>
+              <Link
+                href="/cadastro"
+                className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
+              >
+                Criar meu perfil
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
