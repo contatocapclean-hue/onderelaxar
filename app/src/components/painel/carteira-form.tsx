@@ -54,6 +54,7 @@ export function CarteiraForm({
   // Depósito via Pix
   // ---------------------------------------------------------------------
   const [depositAmount, setDepositAmount] = useState(2000);
+  const [depositAmountInput, setDepositAmountInput] = useState("20,00");
   const [depositLoading, setDepositLoading] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
   const [pix, setPix] = useState<{ depositId: string; qrCode: string | null; qrCodeBase64: string | null } | null>(
@@ -241,7 +242,10 @@ export function CarteiraForm({
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setDepositAmount(c)}
+                  onClick={() => {
+                    setDepositAmount(c);
+                    setDepositAmountInput((c / 100).toFixed(2).replace(".", ","));
+                  }}
                   className={`rounded-full border px-4 py-2 text-sm transition-colors ${
                     depositAmount === c
                       ? "border-primary bg-primary text-primary-foreground"
@@ -255,11 +259,23 @@ export function CarteiraForm({
             <div className="mt-3 flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Outro valor:</span>
               <input
-                type="number"
-                min={5}
-                step="0.01"
-                value={(depositAmount / 100).toFixed(2)}
-                onChange={(e) => setDepositAmount(Math.round(Number(e.target.value) * 100))}
+                type="text"
+                inputMode="decimal"
+                value={depositAmountInput}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  // Aceita dígitos e vírgula/ponto como separador decimal (até 2 casas).
+                  if (!/^\d*[.,]?\d{0,2}$/.test(raw)) return;
+                  setDepositAmountInput(raw);
+                  const normalized = Number(raw.replace(",", "."));
+                  if (Number.isFinite(normalized)) {
+                    setDepositAmount(Math.round(normalized * 100));
+                  }
+                }}
+                onBlur={() => {
+                  setDepositAmountInput((depositAmount / 100).toFixed(2).replace(".", ","));
+                }}
+                placeholder="0,00"
                 className="w-28 rounded-[var(--radius-sm)] border border-border px-3 py-1.5 text-sm"
               />
             </div>

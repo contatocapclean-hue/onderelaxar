@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/mock-data";
 import { createPixPayment, isMercadoPagoConfigured } from "@/lib/mercadopago";
 
@@ -64,15 +65,22 @@ export async function POST(request: NextRequest) {
       description: "Depósito na carteira Onde Relaxar",
     });
 
-    await supabase!
-      .from("wallet_deposits")
-      .update({
-        mp_payment_id: pix.mpPaymentId,
-        qr_code: pix.qrCode,
-        qr_code_base64: pix.qrCodeBase64,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", deposit.id);
+    // Usa o client com service_role: a policy de UPDATE de wallet_deposits
+    // não libera o dono da linha (só admin/service_role), então o client
+    // autenticado do usuário falharia silenciosamente aqui (0 linhas
+    // afetadas, sem erro) e o pagamento ficaria "pending" para sempre.
+    const admin = createAdminClient();
+    if (admin) {
+      await admin
+        .from("wallet_deposits")
+        .update({
+          mp_payment_id: pix.mpPaymentId,
+          qr_code: pix.qrCode,
+          qr_code_base64: pix.qrCodeBase64,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", deposit.id);
+    }
 
     return NextResponse.json({
       depositId: deposit.id,

@@ -68,6 +68,23 @@ export async function fetchPaymentStatus(mpPaymentId: string) {
 }
 
 /**
+ * Busca no Mercado Pago um pagamento pelo `external_reference` (o id do
+ * depósito). Usado como recuperação quando `mp_payment_id` não foi salvo em
+ * wallet_deposits (ex.: falha ao persistir logo após a criação da cobrança).
+ */
+export async function findPaymentByDepositId(depositId: string): Promise<string | null> {
+  const client = getClient();
+  if (!client) throw new Error("Mercado Pago não está configurado.");
+
+  const payment = new Payment(client);
+  const result = await payment.search({
+    options: { external_reference: depositId, sort: "date_created", criteria: "desc" },
+  });
+  const found = result.results?.[0];
+  return found?.id ? String(found.id) : null;
+}
+
+/**
  * Confirma (via API do Mercado Pago) e credita um depósito pendente.
  * Idempotente — pode ser chamada várias vezes (webhook + polling do
  * cliente) sem creditar duas vezes, graças a credit_wallet_deposit() no
@@ -85,9 +102,19 @@ export async function verifyAndCreditDeposit(depositId: string): Promise<"approv
 
   if (!deposit) throw new Error("Depósito não encontrado.");
   if (deposit.status === "approved") return "approved";
-  if (!deposit.mp_payment_id) return "pending";
 
-  const mpStatus = await fetchPaymentStatus(deposit.mp_payment_id);
+  let mpPaymentId = deposit.mp_payment_id;
+
+  if (!mpPaymentId) {
+    // A cobrança foi criada no Mercado Pago mas o id não ficou salvo no
+    // depósito (ex.: falha silenciosa ao persistir). Recupera pelo
+    // external_reference antes de desistir.
+    mpPaymentId = await findPaymentByDepositId(depositId);
+    if (!mpPaymentId) return "pending";
+    await admin.from("wallet_deposits").update({ mp_payment_id: mpPaymentId, updated_at: new Date().toISOString() }).eq("id", depositId);
+  }
+
+  const mpStatus = await fetchPaymentStatus(mpPaymentId);
 
   if (mpStatus === "approved") {
     const { error } = await admin.rpc("credit_wallet_deposit", { p_deposit_id: depositId });
