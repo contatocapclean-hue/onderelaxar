@@ -51,13 +51,13 @@ export async function Header() {
             <>
               <Link
                 href="/entrar"
-                className="hidden sm:inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-foreground hover:bg-beige-soft transition-colors"
+                className="inline-flex items-center rounded-full px-3 py-2 text-sm font-medium text-foreground hover:bg-beige-soft transition-colors sm:px-4"
               >
                 Entrar
               </Link>
               <Link
                 href="/cadastro"
-                className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
+                className="inline-flex items-center rounded-full bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors sm:px-4"
               >
                 Criar conta
               </Link>
