@@ -7,6 +7,7 @@ const NAV = [
   { href: "/painel", label: "Visão geral" },
   { href: "/painel/perfil", label: "Meu perfil" },
   { href: "/painel/fotos", label: "Fotos" },
+  { href: "/painel/carteira", label: "Carteira" },
   { href: "/painel/servicos", label: "Serviços" },
   { href: "/painel/local", label: "Local de atendimento" },
   { href: "/painel/contatos", label: "Contatos" },

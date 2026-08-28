@@ -1,4 +1,13 @@
-import type { City, ProfessionalProfile, Review, ServiceCategory, SiteSettings } from "./types";
+import type {
+  City,
+  ProfessionalProfile,
+  Review,
+  ServiceCategory,
+  SiteSettings,
+  Story,
+  WalletPricing,
+  WalletTransaction,
+} from "./types";
 
 // Dados de demonstração usados quando NEXT_PUBLIC_SUPABASE_URL não está
 // configurado, para que a plataforma seja navegável imediatamente.
@@ -68,8 +77,10 @@ export const MOCK_PROFESSIONALS: ProfessionalProfile[] = names.map((name, i) => 
     verificationStatus: i % 3 === 0 ? "verified" : "unverified",
     profileStatus: "published",
     isFeatured: i < 4,
+    featuredUntil: i < 4 ? new Date(Date.now() + 5 * 86400000).toISOString() : null,
     plan: i < 2 ? "premium" : i < 4 ? "featured" : "free",
     createdAt: new Date(Date.now() - i * 86400000 * 12).toISOString(),
+    walletBalanceCents: i === 0 ? 3450 : 0,
     categories,
     photos: [1, 2, 3].map((n) => ({
       id: `${id}-photo-${n}`,
@@ -118,6 +129,7 @@ export const MOCK_PENDING_PROFESSIONALS: ProfessionalProfile[] = [
     profileStatus: "pending_review",
     verificationStatus: "unverified",
     isFeatured: false,
+    featuredUntil: null,
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   },
   {
@@ -128,6 +140,7 @@ export const MOCK_PENDING_PROFESSIONALS: ProfessionalProfile[] = [
     profileStatus: "pending_review",
     verificationStatus: "unverified",
     isFeatured: false,
+    featuredUntil: null,
     createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
   },
 ];
@@ -203,6 +216,64 @@ export const MOCK_REVIEWS: Review[] = [
     rating: 5,
     comment: null,
     createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+];
+
+export const MOCK_WALLET_PRICING: WalletPricing = {
+  featuredPriceCents: 1990,
+  featuredDays: 7,
+  storyPriceCents: 59,
+};
+
+export const MOCK_STORIES: Story[] = [
+  {
+    id: "story-1",
+    professionalId: MOCK_PROFESSIONALS[0].id,
+    professionalName: MOCK_PROFESSIONALS[0].professionalName,
+    professionalSlug: MOCK_PROFESSIONALS[0].slug,
+    professionalPhoto: MOCK_PROFESSIONALS[0].profilePhoto,
+    mediaUrl: seededPhoto(`${MOCK_PROFESSIONALS[0].slug}-story`, 720, 1280),
+    mediaType: "image",
+    createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+    expiresAt: new Date(Date.now() + 22 * 3600000).toISOString(),
+  },
+  {
+    id: "story-2",
+    professionalId: MOCK_PROFESSIONALS[2].id,
+    professionalName: MOCK_PROFESSIONALS[2].professionalName,
+    professionalSlug: MOCK_PROFESSIONALS[2].slug,
+    professionalPhoto: MOCK_PROFESSIONALS[2].profilePhoto,
+    mediaUrl: seededPhoto(`${MOCK_PROFESSIONALS[2].slug}-story`, 720, 1280),
+    mediaType: "image",
+    createdAt: new Date(Date.now() - 5 * 3600000).toISOString(),
+    expiresAt: new Date(Date.now() + 19 * 3600000).toISOString(),
+  },
+];
+
+export const MOCK_WALLET_TRANSACTIONS: WalletTransaction[] = [
+  {
+    id: "wt-1",
+    professionalId: MOCK_PROFESSIONALS[0].id,
+    type: "deposit",
+    amountCents: 5000,
+    description: "Depósito via Pix",
+    createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+  },
+  {
+    id: "wt-2",
+    professionalId: MOCK_PROFESSIONALS[0].id,
+    type: "featured_purchase",
+    amountCents: -1990,
+    description: "Destaque ativado por 7 dias",
+    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+  {
+    id: "wt-3",
+    professionalId: MOCK_PROFESSIONALS[0].id,
+    type: "story_purchase",
+    amountCents: -59,
+    description: "Publicação de story",
+    createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
   },
 ];
 

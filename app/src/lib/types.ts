@@ -58,12 +58,14 @@ export interface ProfessionalProfile {
   verificationStatus: VerificationStatus;
   profileStatus: ProfileStatus;
   isFeatured: boolean;
+  featuredUntil: string | null;
   plan: PlanCode;
   createdAt: string;
   categories: ServiceCategory[];
   photos: Photo[];
   contact: ContactInfo;
   stats: ProfileStatistics;
+  walletBalanceCents: number;
 }
 
 export interface SiteSettings {
@@ -93,4 +95,43 @@ export interface CityFilters {
   attendanceType?: AttendanceType;
   verifiedOnly?: boolean;
   sort?: SortOption;
+}
+
+export interface Story {
+  id: string;
+  professionalId: string;
+  professionalName: string;
+  professionalSlug: string;
+  professionalPhoto: string | null;
+  mediaUrl: string;
+  mediaType: "image" | "video";
+  createdAt: string;
+  expiresAt: string;
+}
+
+export type WalletTransactionType = "deposit" | "featured_purchase" | "story_purchase" | "refund";
+
+export interface WalletTransaction {
+  id: string;
+  professionalId: string;
+  type: WalletTransactionType;
+  amountCents: number;
+  description: string | null;
+  createdAt: string;
+}
+
+export type DepositStatus = "pending" | "approved" | "rejected" | "expired";
+
+export interface WalletDeposit {
+  id: string;
+  amountCents: number;
+  status: DepositStatus;
+  qrCode: string | null;
+  qrCodeBase64: string | null;
+}
+
+export interface WalletPricing {
+  featuredPriceCents: number;
+  featuredDays: number;
+  storyPriceCents: number;
 }

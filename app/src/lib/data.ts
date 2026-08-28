@@ -6,6 +6,9 @@ import {
   MOCK_PROFESSIONALS,
   MOCK_REVIEWS,
   MOCK_SITE_SETTINGS,
+  MOCK_STORIES,
+  MOCK_WALLET_PRICING,
+  MOCK_WALLET_TRANSACTIONS,
   isSupabaseConfigured,
 } from "@/lib/mock-data";
 import type {
@@ -15,6 +18,9 @@ import type {
   Review,
   ServiceCategory,
   SiteSettings,
+  Story,
+  WalletPricing,
+  WalletTransaction,
 } from "@/lib/types";
 
 /**
@@ -81,13 +87,26 @@ export async function getCategories(): Promise<ServiceCategory[]> {
 const PROFILE_SELECT = `
   id, user_id, professional_name, slug, description, neighborhood,
   profile_photo, attendance_type, venue_name, venue_address,
-  verification_status, profile_status, is_featured, plan, created_at,
+  verification_status, profile_status, is_featured, featured_until,
+  wallet_balance_cents, plan, created_at,
   city:cities ( id, name, state, slug, is_active ),
   professional_services ( service_categories ( id, name, slug, icon ) ),
   photos ( id, image_url, kind, sort_order ),
   contact_info ( whatsapp, phone, email, instagram, whatsapp_visibility, phone_visibility, email_visibility, instagram_visibility ),
   profile_statistics ( views, whatsapp_clicks, contact_clicks )
 `;
+
+/** Um perfil só está "de fato" em destaque se is_featured estiver ligado
+ * E (não tiver data de expiração — destaque manual do admin — ou essa data
+ * ainda não tiver passado). Evita mostrar como destaque um perfil cujo
+ * período pago já venceu, sem precisar de um job agendado para "desligar"
+ * is_featured no banco. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isEffectivelyFeatured(row: any): boolean {
+  if (!row.is_featured) return false;
+  if (!row.featured_until) return true;
+  return new Date(row.featured_until).getTime() > Date.now();
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): ProfessionalProfile {
@@ -111,9 +130,11 @@ function mapRow(row: any): ProfessionalProfile {
     venueAddress: row.venue_address,
     verificationStatus: row.verification_status,
     profileStatus: row.profile_status,
-    isFeatured: row.is_featured,
+    isFeatured: isEffectivelyFeatured(row),
+    featuredUntil: row.featured_until,
     plan: row.plan,
     createdAt: row.created_at,
+    walletBalanceCents: row.wallet_balance_cents ?? 0,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     categories: (row.professional_services ?? []).map((ps: any) => ps.service_categories),
     photos: (row.photos ?? [])
@@ -164,11 +185,13 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
   }
 
   const supabase = await createClient();
+  const nowIso = new Date().toISOString();
   const { data: featuredData } = await supabase!
     .from("professional_profiles")
     .select(PROFILE_SELECT)
     .eq("profile_status", "published")
     .eq("is_featured", true)
+    .or(`featured_until.is.null,featured_until.gt.${nowIso}`)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -278,6 +301,12 @@ export async function getProfessionalsByCity(
   }
   if (filters.sort === "most_viewed") {
     results = [...results].sort((a, b) => b.stats.views - a.stats.views);
+  }
+  if (filters.sort === "featured") {
+    // reordena em memória usando isFeatured "de fato" (considera
+    // featured_until) — a ordenação feita na query acima usa a coluna
+    // bruta, que pode estar desatualizada para um destaque já vencido.
+    results = [...results].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
   }
 
   return results;
@@ -421,4 +450,110 @@ export async function getAllCitiesWithCounts(): Promise<(City & { count: number 
     })
   );
   return counts;
+}
+
+const FALLBACK_FEATURED_DAYS = 7;
+
+/** Preços atuais da carteira (destaque e story), lidos das tabelas plans e
+ * site_settings — assim o admin pode ajustar os valores só com um UPDATE
+ * no banco, sem precisar de novo deploy. */
+export async function getWalletPricing(): Promise<WalletPricing> {
+  if (!isSupabaseConfigured()) return MOCK_WALLET_PRICING;
+
+  const supabase = await createClient();
+  const [{ data: plan }, { data: settings }] = await Promise.all([
+    supabase!.from("plans").select("price_cents").eq("code", "featured").single(),
+    supabase!.from("site_settings").select("story_price_cents").eq("id", 1).single(),
+  ]);
+
+  return {
+    featuredPriceCents: plan?.price_cents ?? MOCK_WALLET_PRICING.featuredPriceCents,
+    featuredDays: FALLBACK_FEATURED_DAYS,
+    storyPriceCents: settings?.story_price_cents ?? MOCK_WALLET_PRICING.storyPriceCents,
+  };
+}
+
+/** Extrato de movimentações da carteira do profissional logado (mais
+ * recentes primeiro). */
+export async function getWalletTransactions(professionalId: string): Promise<WalletTransaction[]> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_WALLET_TRANSACTIONS.filter((t) => t.professionalId === professionalId);
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase!
+    .from("wallet_transactions")
+    .select("id, professional_id, type, amount_cents, description, created_at")
+    .eq("professional_id", professionalId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  return (data ?? []).map((t) => ({
+    id: t.id,
+    professionalId: t.professional_id,
+    type: t.type,
+    amountCents: t.amount_cents,
+    description: t.description,
+    createdAt: t.created_at,
+  }));
+}
+
+/** Stories ativos (não expirados) de perfis publicados, para a barra de
+ * stories da home. Um por profissional na listagem (o mais recente),
+ * agrupamento e ordem de exibição de cada story individual ficam a cargo
+ * do componente cliente. */
+export async function getActiveStories(): Promise<Story[]> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_STORIES.filter((s) => new Date(s.expiresAt).getTime() > Date.now());
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase!
+    .from("stories")
+    .select(
+      "id, professional_id, media_url, media_type, created_at, expires_at, professional_profiles!inner ( professional_name, slug, profile_photo, profile_status )"
+    )
+    .eq("professional_profiles.profile_status", "published")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((s: any) => ({
+    id: s.id,
+    professionalId: s.professional_id,
+    professionalName: s.professional_profiles.professional_name,
+    professionalSlug: s.professional_profiles.slug,
+    professionalPhoto: s.professional_profiles.profile_photo,
+    mediaUrl: s.media_url,
+    mediaType: s.media_type,
+    createdAt: s.created_at,
+    expiresAt: s.expires_at,
+  }));
+}
+
+/** Stories do próprio profissional logado (inclusive para gerenciar no
+ * painel), ativos ou não — usado só na tela "Minha carteira". */
+export async function getOwnStories(professionalId: string): Promise<Story[]> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_STORIES.filter((s) => s.professionalId === professionalId);
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase!
+    .from("stories")
+    .select("id, professional_id, media_url, media_type, created_at, expires_at")
+    .eq("professional_id", professionalId)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((s) => ({
+    id: s.id,
+    professionalId: s.professional_id,
+    professionalName: "",
+    professionalSlug: "",
+    professionalPhoto: null,
+    mediaUrl: s.media_url,
+    mediaType: s.media_type,
+    createdAt: s.created_at,
+    expiresAt: s.expires_at,
+  }));
 }

@@ -2,16 +2,25 @@ import Link from "next/link";
 import { HeroSearch } from "@/components/hero-search";
 import { CategoryCard } from "@/components/category-card";
 import { ProfessionalCard } from "@/components/professional-card";
-import { getAllCitiesWithCounts, getCategories, getCities, getFeaturedProfessionals, getSiteSettings } from "@/lib/data";
+import { StoriesBar } from "@/components/stories-bar";
+import {
+  getActiveStories,
+  getAllCitiesWithCounts,
+  getCategories,
+  getCities,
+  getFeaturedProfessionals,
+  getSiteSettings,
+} from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/mock-data";
 
 export default async function Home() {
-  const [cities, categories, featured, citiesWithCounts, settings] = await Promise.all([
+  const [cities, categories, featured, citiesWithCounts, settings, stories] = await Promise.all([
     getCities(),
     getCategories(),
     getFeaturedProfessionals(8),
     getAllCitiesWithCounts(),
     getSiteSettings(),
+    getActiveStories(),
   ]);
 
   return (
@@ -39,6 +48,8 @@ export default async function Home() {
           <HeroSearch cities={cities} />
         </div>
       </section>
+
+      <StoriesBar stories={stories} />
 
       {/* Categorias */}
       <section id="categorias" className="container-page py-16 sm:py-20">

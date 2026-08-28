@@ -71,6 +71,13 @@ export default async function PainelPage() {
           <p className="font-medium text-foreground">Gerenciar fotos</p>
           <p className="text-sm text-muted-foreground">Foto principal e galeria.</p>
         </Link>
+        <Link href="/painel/carteira" className="rounded-[var(--radius-md)] border border-border bg-surface p-5 hover:bg-beige-soft">
+          <p className="font-medium text-foreground">Carteira</p>
+          <p className="text-sm text-muted-foreground">
+            Saldo: {(profile.walletBalanceCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            {" · "}Depositar, destacar perfil e publicar stories.
+          </p>
+        </Link>
       </div>
     </div>
   );
