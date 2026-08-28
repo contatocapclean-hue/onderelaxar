@@ -116,6 +116,11 @@ export const MOCK_SITE_SETTINGS: SiteSettings = {
   ctaTitle: "É profissional de massagem? Divulgue seu trabalho gratuitamente.",
   ctaSubtitle: "Crie seu perfil em poucos minutos e comece a ser encontrado por clientes na sua cidade.",
   footerDescription: "Diretório de profissionais de massagem. Divulgação gratuita, feita para conectar bem-estar e confiança.",
+  systemStory: {
+    mediaUrl: seededPhoto("onde-relaxar-story-sistema", 720, 1280),
+    mediaType: "image",
+    updatedAt: new Date(Date.now() - 10 * 3600000).toISOString(),
+  },
 };
 
 // Perfis extras usados apenas na área administrativa de demonstração, para

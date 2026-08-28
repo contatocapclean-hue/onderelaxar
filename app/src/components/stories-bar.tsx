@@ -156,9 +156,13 @@ function StoryViewer({
           <span className="relative block h-7 w-7 overflow-hidden rounded-full bg-white/20">
             {group.professionalPhoto && <Image src={group.professionalPhoto} alt="" fill className="object-cover" />}
           </span>
-          <Link href={`/perfil/${group.professionalSlug}`} className="text-sm font-medium hover:underline">
-            {group.professionalName}
-          </Link>
+          {group.professionalSlug ? (
+            <Link href={`/perfil/${group.professionalSlug}`} className="text-sm font-medium hover:underline">
+              {group.professionalName}
+            </Link>
+          ) : (
+            <span className="text-sm font-medium">{group.professionalName}</span>
+          )}
         </div>
 
         <div className="relative flex-1">

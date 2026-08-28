@@ -14,6 +14,14 @@ export async function PATCH(request: NextRequest) {
   if (typeof body.ctaSubtitle === "string") updates.cta_subtitle = body.ctaSubtitle;
   if (typeof body.footerDescription === "string") updates.footer_description = body.footerDescription;
 
+  // Story do sistema: enviado junto (mediaUrl + mediaType) ao publicar um
+  // novo, ou mediaUrl: null sozinho ao remover.
+  if (typeof body.systemStoryMediaUrl !== "undefined") {
+    updates.system_story_media_url = body.systemStoryMediaUrl;
+    updates.system_story_media_type = body.systemStoryMediaUrl ? body.systemStoryMediaType ?? null : null;
+    updates.system_story_updated_at = body.systemStoryMediaUrl ? new Date().toISOString() : null;
+  }
+
   const { error } = await result.supabase.from("site_settings").update(updates).eq("id", 1);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 

@@ -55,7 +55,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   const supabase = await createClient();
   const { data } = await supabase!
     .from("site_settings")
-    .select("hero_badge, hero_title, hero_subtitle, cta_title, cta_subtitle, footer_description")
+    .select(
+      "hero_badge, hero_title, hero_subtitle, cta_title, cta_subtitle, footer_description, system_story_media_url, system_story_media_type, system_story_updated_at"
+    )
     .eq("id", 1)
     .single();
 
@@ -68,6 +70,11 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     ctaTitle: data.cta_title,
     ctaSubtitle: data.cta_subtitle,
     footerDescription: data.footer_description,
+    systemStory: {
+      mediaUrl: data.system_story_media_url,
+      mediaType: data.system_story_media_type,
+      updatedAt: data.system_story_updated_at,
+    },
   };
 }
 
@@ -207,6 +214,35 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
     .limit(limit);
 
   return (recentData ?? []).map(mapRow);
+}
+
+/** Demais profissionais publicados, fora dos já exibidos em destaque —
+ * usado na home para a seção "Todas as outras profissionais", com cards
+ * menores que os de destaque. */
+export async function getOtherProfessionals(
+  excludeIds: string[],
+  limit = 24
+): Promise<ProfessionalProfile[]> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_PROFESSIONALS.filter((p) => !excludeIds.includes(p.id))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+  }
+
+  const supabase = await createClient();
+  let query = supabase!
+    .from("professional_profiles")
+    .select(PROFILE_SELECT)
+    .eq("profile_status", "published")
+    .order("created_at", { ascending: false })
+    .limit(limit + excludeIds.length);
+
+  if (excludeIds.length) {
+    query = query.not("id", "in", `(${excludeIds.join(",")})`);
+  }
+
+  const { data } = await query;
+  return (data ?? []).map(mapRow).slice(0, limit);
 }
 
 export async function getCityBySlug(slug: string): Promise<City | null> {
@@ -502,9 +538,33 @@ export async function getWalletTransactions(professionalId: string): Promise<Wal
  * stories da home. Um por profissional na listagem (o mais recente),
  * agrupamento e ordem de exibição de cada story individual ficam a cargo
  * do componente cliente. */
+/** Story fixo do sistema (publicado pelo admin master em Configurações do
+ * site) como um Story sintético — sem professionalId real, não expira
+ * sozinho e é sempre o primeiro da barra. `null` se nenhum estiver
+ * configurado. */
+function systemStoryEntry(settings: SiteSettings): Story | null {
+  if (!settings.systemStory.mediaUrl || !settings.systemStory.mediaType) return null;
+  return {
+    id: "system-story",
+    professionalId: "system",
+    professionalName: "Onde Relaxar",
+    professionalSlug: "",
+    professionalPhoto: null,
+    mediaUrl: settings.systemStory.mediaUrl,
+    mediaType: settings.systemStory.mediaType,
+    createdAt: settings.systemStory.updatedAt ?? new Date().toISOString(),
+    // sem expiração real: fixado bem no futuro para reaproveitar o mesmo tipo Story.
+    expiresAt: new Date(Date.now() + 100 * 365 * 86400000).toISOString(),
+  };
+}
+
 export async function getActiveStories(): Promise<Story[]> {
+  const settings = await getSiteSettings();
+  const system = systemStoryEntry(settings);
+  const pinned = system ? [system] : [];
+
   if (!isSupabaseConfigured()) {
-    return MOCK_STORIES.filter((s) => new Date(s.expiresAt).getTime() > Date.now());
+    return [...pinned, ...MOCK_STORIES.filter((s) => new Date(s.expiresAt).getTime() > Date.now())];
   }
 
   const supabase = await createClient();
@@ -518,7 +578,7 @@ export async function getActiveStories(): Promise<Story[]> {
     .order("created_at", { ascending: false });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((s: any) => ({
+  const stories = (data ?? []).map((s: any) => ({
     id: s.id,
     professionalId: s.professional_id,
     professionalName: s.professional_profiles.professional_name,
@@ -529,6 +589,8 @@ export async function getActiveStories(): Promise<Story[]> {
     createdAt: s.created_at,
     expiresAt: s.expires_at,
   }));
+
+  return [...pinned, ...stories];
 }
 
 /** Stories do próprio profissional logado (inclusive para gerenciar no

@@ -75,6 +75,11 @@ export interface SiteSettings {
   ctaTitle: string;
   ctaSubtitle: string;
   footerDescription: string;
+  systemStory: {
+    mediaUrl: string | null;
+    mediaType: "image" | "video" | null;
+    updatedAt: string | null;
+  };
 }
 
 export interface Review {

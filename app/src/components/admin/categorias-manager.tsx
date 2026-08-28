@@ -21,7 +21,7 @@ export function CategoriasManager({ initialCategories }: { initialCategories: (S
       setMessage(data.error);
       return;
     }
-    setCategories((prev) => [...prev, { id: `${prev.length + 1}`, name, slug: "", icon: "plus", isActive: true }]);
+    setCategories((prev) => [...prev, { id: `${prev.length + 1}`, name, slug: "", icon: null, isActive: true }]);
     setName("");
   }
 

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   const { error } = await result.supabase
     .from("service_categories")
-    .insert({ name, slug: slugify(name), icon: "plus" });
+    .insert({ name, slug: slugify(name) });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
   return NextResponse.json({ ok: true });
