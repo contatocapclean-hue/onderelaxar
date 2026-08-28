@@ -59,7 +59,7 @@ export async function Header() {
                 href="/cadastro"
                 className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
               >
-                Criar meu perfil
+                Criar conta
               </Link>
             </>
           )}

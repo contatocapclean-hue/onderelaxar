@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { StatCard } from "@/components/stat-card";
-import { getCurrentUserProfessionalProfile } from "@/lib/data";
+import { getCurrentAuthUser, getCurrentUserProfessionalProfile } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/mock-data";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -12,9 +12,36 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default async function PainelPage() {
-  const profile = await getCurrentUserProfessionalProfile();
+  const [profile, user] = await Promise.all([getCurrentUserProfessionalProfile(), getCurrentAuthUser()]);
 
   if (!profile) {
+    // Conta "visitante": nunca é levada ao assistente de perfil profissional
+    // — só navega pelo site normalmente.
+    if (user?.accountType === "visitante") {
+      return (
+        <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-beige-soft p-10 text-center">
+          <h1 className="font-display text-xl text-foreground">Você está cadastrado como visitante</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sua conta é só para navegar e encontrar profissionais — sem perfil profissional para gerenciar por aqui.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+            >
+              Encontrar profissionais
+            </Link>
+            <Link
+              href="/cadastro/perfil"
+              className="inline-flex rounded-full border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:bg-beige-soft"
+            >
+              Na verdade, quero anunciar
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-beige-soft p-10 text-center">
         <h1 className="font-display text-xl text-foreground">Você ainda não criou seu perfil</h1>

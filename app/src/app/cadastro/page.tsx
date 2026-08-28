@@ -34,13 +34,13 @@ export default function CadastroPage() {
       setError(data.error ?? "Não foi possível criar sua conta.");
       return;
     }
-    router.push("/cadastro/perfil");
+    router.push("/cadastro/objetivo");
   }
 
   return (
     <AuthCard
       title="Criar minha conta"
-      subtitle="Passo 1 de 5 — depois vamos montar seu perfil profissional."
+      subtitle="Passo 1 — depois vamos perguntar o que você procura no Onde Relaxar."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>

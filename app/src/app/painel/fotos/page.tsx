@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 export default async function PainelFotosPage() {
   const profile = await getCurrentUserProfessionalProfile();
-  if (!profile) redirect("/cadastro/perfil");
+  if (!profile) redirect("/painel");
 
   return (
     <div>

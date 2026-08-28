@@ -3,6 +3,7 @@ export type ProfileStatus = "draft" | "pending_review" | "published" | "rejected
 export type VerificationStatus = "unverified" | "verified";
 export type Visibility = "public" | "on_request" | "hidden";
 export type PlanCode = "free" | "featured" | "premium";
+export type AccountType = "anunciante" | "visitante";
 
 export interface City {
   id: string;

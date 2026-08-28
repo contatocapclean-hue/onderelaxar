@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 export default async function PainelEstatisticasPage() {
   const profile = await getCurrentUserProfessionalProfile();
-  if (!profile) redirect("/cadastro/perfil");
+  if (!profile) redirect("/painel");
 
   const conversionRate = profile.stats.views
     ? ((profile.stats.whatsappClicks + profile.stats.contactClicks) / profile.stats.views) * 100

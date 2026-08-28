@@ -9,7 +9,7 @@ const PLAN_LABEL: Record<string, string> = {
 
 export default async function PainelConfiguracoesPage() {
   const [user, profile] = await Promise.all([getCurrentAuthUser(), getCurrentUserProfessionalProfile()]);
-  if (!profile) redirect("/cadastro/perfil");
+  if (!profile) redirect("/painel");
 
   return (
     <div>

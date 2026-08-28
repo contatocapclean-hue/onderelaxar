@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 export default async function PainelPerfilPage() {
   const [profile, cities] = await Promise.all([getCurrentUserProfessionalProfile(), getCities()]);
-  if (!profile) redirect("/cadastro/perfil");
+  if (!profile) redirect("/painel");
 
   return (
     <div>

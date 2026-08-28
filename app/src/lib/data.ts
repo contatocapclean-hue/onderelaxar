@@ -12,6 +12,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/mock-data";
 import type {
+  AccountType,
   City,
   CityFilters,
   ProfessionalProfile,
@@ -400,14 +401,33 @@ export async function getProfessionalReviews(professionalId: string): Promise<Re
  * usuário fictício para permitir navegar pelo painel sem Supabase. */
 export async function getCurrentAuthUser() {
   if (!isSupabaseConfigured()) {
-    return { id: "demo-user", email: "demo@onderelaxar.app", name: "Conta demonstração" };
+    return {
+      id: "demo-user",
+      email: "demo@onderelaxar.app",
+      name: "Conta demonstração",
+      accountType: "anunciante" as AccountType,
+    };
   }
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase!.auth.getUser();
   if (!user) return null;
-  return { id: user.id, email: user.email ?? "", name: (user.user_metadata?.name as string) ?? "" };
+
+  const { data: profileRow } = await supabase!
+    .from("profiles")
+    .select("account_type")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    name: (user.user_metadata?.name as string) ?? "",
+    // account_type nulo (conta anterior a esse recurso, ou que ainda não
+    // respondeu à pergunta em /cadastro/objetivo) é tratado como anunciante.
+    accountType: (profileRow?.account_type as AccountType | null) ?? "anunciante",
+  };
 }
 
 /** Retorna o perfil profissional do usuário logado. Em modo demo, retorna

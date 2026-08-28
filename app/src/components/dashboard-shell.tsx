@@ -15,9 +15,20 @@ const NAV = [
   { href: "/painel/configuracoes", label: "Configurações" },
 ];
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({
+  children,
+  hasProfile = true,
+}: {
+  children: React.ReactNode;
+  hasProfile?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+
+  // Sem perfil profissional (conta visitante, ou anunciante que ainda não
+  // completou o cadastro), as demais páginas do painel não fazem sentido —
+  // todas redirecionam de volta para "Visão geral" ao serem acessadas.
+  const nav = hasProfile ? NAV : NAV.slice(0, 1);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -29,7 +40,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="container-page grid gap-8 py-10 lg:grid-cols-[220px_1fr]">
       <aside className="lg:sticky lg:top-20 lg:self-start">
         <nav className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}

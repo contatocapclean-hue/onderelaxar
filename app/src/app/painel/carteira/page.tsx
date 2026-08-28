@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 export default async function PainelCarteiraPage() {
   const profile = await getCurrentUserProfessionalProfile();
-  if (!profile) redirect("/cadastro/perfil");
+  if (!profile) redirect("/painel");
 
   const [pricing, transactions, stories] = await Promise.all([
     getWalletPricing(),
