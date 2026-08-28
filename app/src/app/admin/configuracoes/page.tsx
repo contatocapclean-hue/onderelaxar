@@ -1,8 +1,11 @@
+import { redirect } from "next/navigation";
 import { SiteSettingsForm } from "@/components/admin/site-settings-form";
-import { getSiteSettings } from "@/lib/data";
+import { getSiteSettings, isCurrentUserSuperAdmin } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/mock-data";
 
 export default async function AdminConfiguracoesPage() {
+  if (!(await isCurrentUserSuperAdmin())) redirect("/admin");
+
   const settings = await getSiteSettings();
 
   return (

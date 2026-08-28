@@ -50,8 +50,14 @@ export async function proxy(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    const isAdmin = profile?.role === "admin" || profile?.role === "super_admin";
+    if (!isAdmin) {
       return NextResponse.redirect(new URL("/painel", request.url));
+    }
+
+    // "Configurações do site" é restrito ao administrador master.
+    if (request.nextUrl.pathname.startsWith("/admin/configuracoes") && profile?.role !== "super_admin") {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
   }
 

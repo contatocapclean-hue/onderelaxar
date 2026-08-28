@@ -3,18 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV = [
+const BASE_NAV = [
   { href: "/admin", label: "Visão geral" },
   { href: "/admin/perfis", label: "Perfis" },
   { href: "/admin/usuarios", label: "Usuários" },
   { href: "/admin/cidades", label: "Cidades" },
   { href: "/admin/categorias", label: "Categorias" },
   { href: "/admin/denuncias", label: "Denúncias" },
-  { href: "/admin/configuracoes", label: "Configurações do site" },
 ];
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+const SUPER_ADMIN_NAV = [{ href: "/admin/configuracoes", label: "Configurações do site" }];
+
+export function AdminShell({
+  children,
+  isSuperAdmin,
+}: {
+  children: React.ReactNode;
+  isSuperAdmin: boolean;
+}) {
   const pathname = usePathname();
+  const NAV = isSuperAdmin ? [...BASE_NAV, ...SUPER_ADMIN_NAV] : BASE_NAV;
 
   return (
     <div className="container-page grid gap-8 py-10 lg:grid-cols-[220px_1fr]">

@@ -319,8 +319,8 @@ export async function getCurrentUserProfessionalProfile(): Promise<ProfessionalP
   return mapRow(data);
 }
 
-/** Verifica se o usuário logado é admin. Em modo demo, retorna true para
- * permitir explorar a área administrativa. */
+/** Verifica se o usuário logado é admin (inclui super_admin). Em modo demo,
+ * retorna true para permitir explorar a área administrativa. */
 export async function isCurrentUserAdmin(): Promise<boolean> {
   if (!isSupabaseConfigured()) return true;
 
@@ -331,7 +331,22 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
   if (!user) return false;
 
   const { data } = await supabase!.from("profiles").select("role").eq("id", user.id).single();
-  return data?.role === "admin";
+  return data?.role === "admin" || data?.role === "super_admin";
+}
+
+/** Verifica se o usuário logado é o administrador master (dono do site), o
+ * único com acesso a "Configurações do site". Em modo demo, retorna true. */
+export async function isCurrentUserSuperAdmin(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return true;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase!.auth.getUser();
+  if (!user) return false;
+
+  const { data } = await supabase!.from("profiles").select("role").eq("id", user.id).single();
+  return data?.role === "super_admin";
 }
 
 export async function getAllCitiesWithCounts(): Promise<(City & { count: number })[]> {
