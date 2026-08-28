@@ -19,6 +19,15 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase!.auth.signInWithPassword({ email, password });
 
   if (error) {
+    if (error.message.toLowerCase().includes("email not confirmed")) {
+      return NextResponse.json(
+        {
+          error: "Você ainda não confirmou seu e-mail. Verifique sua caixa de entrada (e o spam).",
+          code: "email_not_confirmed",
+        },
+        { status: 400 }
+      );
+    }
     return NextResponse.json({ error: "E-mail ou senha inválidos." }, { status: 400 });
   }
 

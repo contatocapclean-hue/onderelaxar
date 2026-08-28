@@ -20,15 +20,25 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
+  const origin = new URL(request.url).origin;
   const { data, error } = await supabase!.auth.signUp({
     email,
     password,
-    options: { data: { name } },
+    options: {
+      data: { name },
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
   });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true, userId: data.user?.id });
+  // Com "Confirm email" ativado no Supabase, o signUp não retorna sessão —
+  // o usuário só fica autenticado depois de clicar no link do e-mail
+  // (rota /auth/callback). O front usa essa flag pra decidir se manda a
+  // pessoa direto pra próxima etapa ou mostra "confira seu e-mail".
+  const needsEmailConfirmation = !data.session;
+
+  return NextResponse.json({ ok: true, userId: data.user?.id, needsEmailConfirmation });
 }

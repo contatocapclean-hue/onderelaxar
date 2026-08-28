@@ -12,6 +12,9 @@ export default function CadastroPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,7 +37,49 @@ export default function CadastroPage() {
       setError(data.error ?? "Não foi possível criar sua conta.");
       return;
     }
+    if (data.needsEmailConfirmation) {
+      setEmailSent(true);
+      return;
+    }
     router.push("/cadastro/objetivo");
+  }
+
+  async function handleResend() {
+    setResending(true);
+    setResendMessage(null);
+    const res = await fetch("/api/auth/resend-confirmation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    setResending(false);
+    setResendMessage(res.ok ? "E-mail reenviado." : data.error ?? "Não foi possível reenviar.");
+  }
+
+  if (emailSent) {
+    return (
+      <AuthCard title="Confirme seu e-mail" subtitle="Falta só um passo para ativar sua conta.">
+        <p className="text-sm text-muted-foreground">
+          Enviamos um link de confirmação para <span className="font-medium text-foreground">{email}</span>.
+          Abra seu e-mail e clique no link para continuar o cadastro. Se não encontrar, confira a caixa de
+          spam.
+        </p>
+        <button
+          onClick={handleResend}
+          disabled={resending}
+          className="mt-4 text-sm font-medium text-primary hover:underline disabled:opacity-60"
+        >
+          {resending ? "Reenviando…" : "Não recebeu? Reenviar e-mail"}
+        </button>
+        {resendMessage && <p className="mt-1 text-sm text-muted-foreground">{resendMessage}</p>}
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          <Link href="/entrar" className="text-primary hover:underline">
+            Voltar para o login
+          </Link>
+        </p>
+      </AuthCard>
+    );
   }
 
   return (

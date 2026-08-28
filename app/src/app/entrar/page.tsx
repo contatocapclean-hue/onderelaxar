@@ -11,11 +11,16 @@ function EntrarForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setNeedsConfirmation(false);
+    setResendMessage(null);
     setLoading(true);
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -26,10 +31,24 @@ function EntrarForm() {
     setLoading(false);
     if (!res.ok) {
       setError(data.error ?? "Não foi possível entrar.");
+      setNeedsConfirmation(data.code === "email_not_confirmed");
       return;
     }
     router.push(searchParams.get("next") ?? "/painel");
     router.refresh();
+  }
+
+  async function handleResend() {
+    setResending(true);
+    setResendMessage(null);
+    const res = await fetch("/api/auth/resend-confirmation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    setResending(false);
+    setResendMessage(res.ok ? "E-mail de confirmação reenviado." : data.error ?? "Não foi possível reenviar.");
   }
 
   return (
@@ -57,6 +76,19 @@ function EntrarForm() {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
+        {needsConfirmation && (
+          <div>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="text-sm font-medium text-primary hover:underline disabled:opacity-60"
+            >
+              {resending ? "Reenviando…" : "Reenviar e-mail de confirmação"}
+            </button>
+            {resendMessage && <p className="mt-1 text-sm text-muted-foreground">{resendMessage}</p>}
+          </div>
+        )}
 
         <button
           type="submit"
