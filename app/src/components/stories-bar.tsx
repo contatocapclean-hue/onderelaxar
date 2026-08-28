@@ -40,7 +40,7 @@ export function StoriesBar({ stories }: { stories: Story[] }) {
   if (groups.length === 0) return null;
 
   return (
-    <section className="container-page py-6">
+    <section className="container-page pb-4 pt-3">
       <div className="flex gap-4 overflow-x-auto pb-1">
         {groups.map((g, i) => (
           <button

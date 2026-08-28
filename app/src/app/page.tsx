@@ -41,28 +41,23 @@ export default async function Home() {
       )}
 
       <div className="bg-gradient-to-b from-beige-soft to-background">
-        {/* Selo — logo abaixo do cabeçalho */}
-        <div className="container-page flex justify-center pt-5 pb-4 sm:pt-7">
+        {/* Stories — colados no cabeçalho */}
+        <StoriesBar stories={stories} />
+
+        {/* Título + selo + filtro de busca */}
+        <div className="container-page flex flex-col items-center gap-4 pb-10 pt-2 text-center sm:pb-14">
+          <h1 className="font-display max-w-2xl text-4xl leading-[1.1] text-foreground sm:text-5xl">
+            {settings.heroTitle}
+          </h1>
           <span className="rounded-full bg-accent-soft px-4 py-1.5 text-xs font-medium text-primary">
             {settings.heroBadge}
           </span>
-        </div>
-
-        {/* Stories */}
-        <StoriesBar stories={stories} />
-
-        {/* Título + filtro de busca */}
-        <div className="container-page flex flex-col items-center gap-6 pb-16 pt-2 text-center sm:pb-24">
-          <h1 className="font-display max-w-2xl text-4xl leading-tight text-foreground sm:text-5xl">
-            {settings.heroTitle}
-          </h1>
-          <p className="max-w-xl text-base text-muted-foreground sm:text-lg">{settings.heroSubtitle}</p>
           <HeroSearch cities={cities} />
         </div>
       </div>
 
       {/* Profissionais em destaque */}
-      <section className="bg-beige-soft py-16 sm:py-20">
+      <section className="bg-beige-soft pb-16 pt-10 sm:pb-20 sm:pt-12">
         <div className="container-page">
           <div className="mb-8 flex items-end justify-between">
             <h2 className="font-display text-2xl text-foreground sm:text-3xl">
