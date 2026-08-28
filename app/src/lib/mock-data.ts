@@ -1,4 +1,4 @@
-import type { City, ProfessionalProfile, ServiceCategory, SiteSettings } from "./types";
+import type { City, ProfessionalProfile, Review, ServiceCategory, SiteSettings } from "./types";
 
 // Dados de demonstração usados quando NEXT_PUBLIC_SUPABASE_URL não está
 // configurado, para que a plataforma seja navegável imediatamente.
@@ -173,6 +173,36 @@ export const MOCK_REPORTS: MockReport[] = [
     reason: "Informações de contato desatualizadas",
     status: "reviewed",
     createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+  },
+];
+
+export const MOCK_REVIEWS: Review[] = [
+  {
+    id: "rev1",
+    professionalId: MOCK_PROFESSIONALS[0].id,
+    reviewerId: "u-demo-1",
+    reviewerName: "Cliente Satisfeita",
+    rating: 5,
+    comment: "Atendimento excelente, super profissional e atenciosa. Recomendo!",
+    createdAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+  },
+  {
+    id: "rev2",
+    professionalId: MOCK_PROFESSIONALS[0].id,
+    reviewerId: "u-demo-2",
+    reviewerName: "Roberto M.",
+    rating: 4,
+    comment: "Muito bom, ambiente tranquilo e relaxante.",
+    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+  },
+  {
+    id: "rev3",
+    professionalId: MOCK_PROFESSIONALS[1].id,
+    reviewerId: "u-demo-3",
+    reviewerName: "Juliana P.",
+    rating: 5,
+    comment: null,
+    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
 ];
 

@@ -75,6 +75,16 @@ export interface SiteSettings {
   footerDescription: string;
 }
 
+export interface Review {
+  id: string;
+  professionalId: string;
+  reviewerId: string;
+  reviewerName: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
 export type SortOption = "recent" | "most_viewed" | "featured";
 
 export interface CityFilters {

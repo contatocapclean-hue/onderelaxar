@@ -13,12 +13,18 @@ function track(professionalId: string, field: "whatsapp_clicks" | "contact_click
 
 export function ContactButtons({
   professionalId,
+  professionalName,
   contact,
 }: {
   professionalId: string;
+  professionalName: string;
   contact: ContactInfo;
 }) {
   const [revealed, setRevealed] = useState(false);
+
+  const whatsappDigits = contact.whatsapp ? contact.whatsapp.replace(/\D/g, "") : "";
+  const whatsappMessage = `Olá ${professionalName}, encontrei seu perfil no www.onderelaxar.com.br. Gostaria de saber mais informações.`;
+  const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const hasOnRequest =
     contact.whatsappVisibility === "on_request" ||
@@ -40,7 +46,7 @@ export function ContactButtons({
       <div className="flex flex-wrap gap-3">
         {showWhatsapp && (
           <a
-            href={`https://wa.me/${contact.whatsapp}`}
+            href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => track(professionalId, "whatsapp_clicks")}

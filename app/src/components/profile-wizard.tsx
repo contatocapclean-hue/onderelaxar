@@ -315,7 +315,7 @@ export function ProfileWizard({ cities, categories }: Props) {
                   </p>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-foreground/90">{description || "Sua descrição aparecerá aqui."}</p>
+              <p className="mt-3 whitespace-pre-line text-sm text-foreground/90">{description || "Sua descrição aparecerá aqui."}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {categoryIds.map((id) => (
                   <span key={id} className="rounded-full bg-accent-soft px-2.5 py-1 text-xs text-primary">

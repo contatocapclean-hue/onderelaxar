@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProfessionalBySlug } from "@/lib/data";
+import { getCurrentAuthUser, getProfessionalBySlug, getProfessionalReviews } from "@/lib/data";
 import { Gallery } from "@/components/gallery";
 import { ContactButtons } from "@/components/contact-buttons";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { ViewTracker } from "@/components/view-tracker";
 import { ReportButton } from "@/components/report-button";
+import { ReviewsSection } from "@/components/reviews-section";
 import { attendanceLabel } from "@/lib/utils";
 
 interface Props {
@@ -34,6 +35,14 @@ export default async function PerfilPage({ params }: Props) {
   const professional = await getProfessionalBySlug(slug);
   if (!professional) notFound();
 
+  const [reviews, currentUser] = await Promise.all([
+    getProfessionalReviews(professional.id),
+    getCurrentAuthUser(),
+  ]);
+
+  const isOwner = currentUser?.id === professional.userId;
+  const existingUserReview = currentUser ? reviews.find((r) => r.reviewerId === currentUser.id) ?? null : null;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -56,6 +65,16 @@ export default async function PerfilPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
+      {professional.profileStatus !== "published" && (
+        // Se chegamos até aqui com um perfil não publicado, é porque a RLS
+        // já garantiu que somente o dono ou um admin conseguem visualizá-lo.
+        <div className="mb-6 rounded-[var(--radius-sm)] border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {isOwner
+            ? "Seu perfil ainda não foi publicado. Esta é uma prévia de como ele ficará assim que for aprovado."
+            : `Prévia administrativa — este perfil está com status "${professional.profileStatus}" e ainda não é visível ao público.`}
+        </div>
+      )}
 
       <div className="grid gap-10 lg:grid-cols-5">
         <div className="lg:col-span-2">
@@ -87,7 +106,7 @@ export default async function PerfilPage({ params }: Props) {
 
           <section className="mt-6">
             <h2 className="font-display text-lg text-foreground">Sobre o profissional</h2>
-            <p className="mt-2 leading-relaxed text-foreground/90">{professional.description}</p>
+            <p className="mt-2 whitespace-pre-line leading-relaxed text-foreground/90">{professional.description}</p>
           </section>
 
           <section className="mt-6">
@@ -120,9 +139,21 @@ export default async function PerfilPage({ params }: Props) {
               Os dados exibidos respeitam as preferências de privacidade do profissional.
             </p>
             <div className="mt-4">
-              <ContactButtons professionalId={professional.id} contact={professional.contact} />
+              <ContactButtons
+                professionalId={professional.id}
+                professionalName={professional.professionalName}
+                contact={professional.contact}
+              />
             </div>
           </section>
+
+          <ReviewsSection
+            professionalId={professional.id}
+            reviews={reviews}
+            isLoggedIn={Boolean(currentUser)}
+            isOwner={isOwner}
+            existingUserReview={existingUserReview}
+          />
 
           <div className="mt-8">
             <ReportButton professionalId={professional.id} />

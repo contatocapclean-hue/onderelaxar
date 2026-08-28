@@ -2,7 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import {
   MOCK_CATEGORIES,
   MOCK_CITIES,
+  MOCK_PENDING_PROFESSIONALS,
   MOCK_PROFESSIONALS,
+  MOCK_REVIEWS,
   MOCK_SITE_SETTINGS,
   isSupabaseConfigured,
 } from "@/lib/mock-data";
@@ -10,6 +12,7 @@ import type {
   City,
   CityFilters,
   ProfessionalProfile,
+  Review,
   ServiceCategory,
   SiteSettings,
 } from "@/lib/types";
@@ -151,11 +154,17 @@ function mapRow(row: any): ProfessionalProfile {
 
 export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalProfile[]> {
   if (!isSupabaseConfigured()) {
-    return MOCK_PROFESSIONALS.filter((p) => p.isFeatured).slice(0, limit);
+    const featured = MOCK_PROFESSIONALS.filter((p) => p.isFeatured);
+    if (featured.length) return featured.slice(0, limit);
+    // Enquanto nenhum profissional estiver marcado como destaque, mostramos
+    // os últimos cadastrados no lugar.
+    return [...MOCK_PROFESSIONALS]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
   }
 
   const supabase = await createClient();
-  const { data } = await supabase!
+  const { data: featuredData } = await supabase!
     .from("professional_profiles")
     .select(PROFILE_SELECT)
     .eq("profile_status", "published")
@@ -163,7 +172,18 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  return (data ?? []).map(mapRow);
+  if (featuredData && featuredData.length) return featuredData.map(mapRow);
+
+  // Enquanto nenhum profissional estiver marcado como destaque, mostramos
+  // os últimos cadastrados no lugar.
+  const { data: recentData } = await supabase!
+    .from("professional_profiles")
+    .select(PROFILE_SELECT)
+    .eq("profile_status", "published")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (recentData ?? []).map(mapRow);
 }
 
 export async function getCityBySlug(slug: string): Promise<City | null> {
@@ -265,19 +285,50 @@ export async function getProfessionalsByCity(
 
 export async function getProfessionalBySlug(slug: string): Promise<ProfessionalProfile | null> {
   if (!isSupabaseConfigured()) {
-    return MOCK_PROFESSIONALS.find((p) => p.slug === slug) ?? null;
+    return (
+      MOCK_PROFESSIONALS.find((p) => p.slug === slug) ??
+      MOCK_PENDING_PROFESSIONALS.find((p) => p.slug === slug) ??
+      null
+    );
   }
 
+  // Sem filtro de profile_status aqui: a política de RLS de
+  // professional_profiles já garante que só perfis publicados, o próprio
+  // dono ou um admin conseguem ler a linha — assim o admin consegue abrir
+  // o link do perfil para aprovar/revisar perfis ainda não publicados.
   const supabase = await createClient();
   const { data } = await supabase!
     .from("professional_profiles")
     .select(PROFILE_SELECT)
     .eq("slug", slug)
-    .eq("profile_status", "published")
     .single();
 
   if (!data) return null;
   return mapRow(data);
+}
+
+/** Retorna as avaliações de um profissional, mais recentes primeiro. */
+export async function getProfessionalReviews(professionalId: string): Promise<Review[]> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_REVIEWS.filter((r) => r.professionalId === professionalId);
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase!
+    .from("reviews")
+    .select("id, professional_id, reviewer_id, reviewer_name, rating, comment, created_at")
+    .eq("professional_id", professionalId)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    professionalId: r.professional_id,
+    reviewerId: r.reviewer_id,
+    reviewerName: r.reviewer_name,
+    rating: r.rating,
+    comment: r.comment,
+    createdAt: r.created_at,
+  }));
 }
 
 /** Retorna o usuário autenticado atual (ou null). Em modo demo, retorna um
