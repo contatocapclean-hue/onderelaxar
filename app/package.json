@@ -10,6 +10,7 @@
     "seed": "node scripts/seed.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.1121.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "clsx": "^2.1.1",
