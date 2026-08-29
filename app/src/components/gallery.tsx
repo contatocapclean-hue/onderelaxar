@@ -5,10 +5,19 @@ import { useEffect, useState } from "react";
 import type { Photo } from "@/lib/types";
 
 export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null; photos: Photo[]; name: string }) {
-  const all = [
+  // mainPhoto (a foto de perfil) é sempre a URL de uma das fotos já
+  // presentes em `photos` — não é uma imagem à parte. Deduplicamos por
+  // URL para não mostrar a mesma foto duas vezes na galeria.
+  const candidates = [
     ...(mainPhoto ? [{ id: "main", url: mainPhoto, kind: "profile" as const, order: -1 }] : []),
     ...photos,
   ];
+  const seenUrls = new Set<string>();
+  const all = candidates.filter((p) => {
+    if (seenUrls.has(p.url)) return false;
+    seenUrls.add(p.url);
+    return true;
+  });
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 

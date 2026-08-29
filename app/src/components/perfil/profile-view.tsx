@@ -26,7 +26,13 @@ export function ProfileView({
   const router = useRouter();
 
   const coverPhoto = professional.coverPhoto ?? professional.photos[0]?.url ?? professional.profilePhoto;
-  const totalPhotos = (professional.profilePhoto ? 1 : 0) + professional.photos.length;
+  // professional.profilePhoto é sempre a URL de uma das fotos já presentes
+  // em professional.photos — não é uma foto extra. Contamos fotos únicas
+  // por URL para bater com o que a Galeria realmente exibe.
+  const totalPhotos = new Set([
+    ...(professional.profilePhoto ? [professional.profilePhoto] : []),
+    ...professional.photos.map((p) => p.url),
+  ]).size;
 
   const whatsappDigits = professional.contact.whatsapp ? professional.contact.whatsapp.replace(/\D/g, "") : "";
   const showStickyWhatsapp = Boolean(whatsappDigits) && professional.contact.whatsappVisibility === "public";
