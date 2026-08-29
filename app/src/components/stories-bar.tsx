@@ -58,10 +58,12 @@ export function StoriesBar({ stories }: { stories: Story[] }) {
                   <span className="relative block h-16 w-16 overflow-hidden rounded-full bg-beige-soft">
                     {latest?.mediaType === "video" ? (
                       <video
-                        src={`${latest.mediaUrl}#t=0.1`}
+                        src={latest.mediaUrl}
+                        autoPlay
                         muted
+                        loop
                         playsInline
-                        preload="metadata"
+                        preload="auto"
                         className="h-full w-full object-cover"
                       />
                     ) : latest?.mediaUrl ? (
