@@ -42,30 +42,44 @@ export function StoriesBar({ stories }: { stories: Story[] }) {
   return (
     <section className="container-page pb-4 pt-3">
       <div className="flex gap-4 overflow-x-auto pb-1">
-        {groups.map((g, i) => (
-          <button
-            key={g.professionalId}
-            onClick={() => setOpenGroupIndex(i)}
-            className="flex shrink-0 flex-col items-center gap-1.5"
-          >
-            <span className="rounded-full bg-gradient-to-tr from-primary to-accent-soft p-[2.5px]">
-              <span className="block rounded-full bg-background p-[2px]">
-                <span className="relative block h-16 w-16 overflow-hidden rounded-full">
-                  {g.professionalPhoto ? (
-                    <Image src={g.professionalPhoto} alt="" fill className="object-cover" />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center bg-beige-soft text-lg text-foreground/60">
-                      {g.professionalName.charAt(0)}
-                    </span>
-                  )}
+        {groups.map((g, i) => {
+          // Prévia = o último story publicado (o primeiro do grupo, já que a
+          // lista vem ordenada do mais recente para o mais antigo), não a
+          // foto de perfil.
+          const latest = g.stories[0];
+          return (
+            <button
+              key={g.professionalId}
+              onClick={() => setOpenGroupIndex(i)}
+              className="flex shrink-0 flex-col items-center gap-1.5"
+            >
+              <span className="rounded-full bg-gradient-to-tr from-primary to-accent-soft p-[2.5px]">
+                <span className="block rounded-full bg-background p-[2px]">
+                  <span className="relative block h-16 w-16 overflow-hidden rounded-full bg-beige-soft">
+                    {latest?.mediaType === "video" ? (
+                      <video
+                        src={`${latest.mediaUrl}#t=0.1`}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : latest?.mediaUrl ? (
+                      <Image src={latest.mediaUrl} alt="" fill className="object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-lg text-foreground/60">
+                        {g.professionalName.charAt(0)}
+                      </span>
+                    )}
+                  </span>
                 </span>
               </span>
-            </span>
-            <span className="max-w-[4.5rem] truncate text-xs text-foreground/80">
-              {g.professionalName.split(" ")[0]}
-            </span>
-          </button>
-        ))}
+              <span className="max-w-[4.5rem] truncate text-xs text-foreground/80">
+                {g.professionalName.split(" ")[0]}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {openGroupIndex !== null && (

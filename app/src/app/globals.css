@@ -57,6 +57,11 @@ h1, h2, h3, .font-display {
   border-color: var(--color-border);
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 .container-page {
   max-width: 78rem;
   margin-left: auto;

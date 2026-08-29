@@ -8,14 +8,20 @@ function isNew(createdAt: string): boolean {
 }
 
 export function ProfessionalCard({ professional }: { professional: ProfessionalProfile }) {
-  const specialties = professional.categories.slice(0, 3);
+  const profileHref = `/perfil/${professional.slug}`;
+  const whatsappDigits = professional.contact?.whatsapp
+    ? professional.contact.whatsapp.replace(/\D/g, "")
+    : "";
+  const showWhatsapp = Boolean(whatsappDigits) && professional.contact?.whatsappVisibility === "public";
+  const whatsappMessage = `Olá ${professional.professionalName}, encontrei seu perfil no www.onderelaxar.com.br. Gostaria de saber mais informações.`;
+  const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <Link
-      href={`/perfil/${professional.slug}`}
-      className="group block overflow-hidden rounded-[var(--radius-lg)] bg-surface card-shadow border border-border transition-transform hover:-translate-y-0.5"
-    >
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-beige-soft">
+    <div className="group overflow-hidden rounded-[var(--radius-lg)] bg-surface card-shadow border border-border transition-transform hover:-translate-y-0.5">
+      <Link
+        href={profileHref}
+        className="relative block aspect-[4/5] w-full overflow-hidden bg-beige-soft"
+      >
         {professional.profilePhoto && (
           <Image
             src={professional.profilePhoto}
@@ -25,6 +31,7 @@ export function ProfessionalCard({ professional }: { professional: ProfessionalP
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         )}
+
         <div className="absolute left-3 top-3 flex flex-col gap-1.5">
           {professional.verificationStatus === "verified" && <VerifiedBadge />}
           {isNew(professional.createdAt) && (
@@ -38,26 +45,48 @@ export function ProfessionalCard({ professional }: { professional: ProfessionalP
             Destaque
           </span>
         )}
-      </div>
 
-      <div className="p-4">
-        <h3 className="font-display text-lg text-foreground leading-tight">
-          {professional.professionalName}
-        </h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {specialties.map((s) => s.name).join(" • ")}
-        </p>
-        <p className="mt-2 flex items-center gap-1 text-sm text-foreground/80">
-          <span aria-hidden>📍</span>
-          {professional.city.name} — {professional.neighborhood}
-        </p>
-        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-          {professional.description}
-        </p>
-        <span className="mt-4 inline-flex items-center text-sm font-medium text-primary group-hover:underline">
-          Ver perfil →
-        </span>
+        {/* Nome + cidade sobrepostos na própria foto, com gradiente para legibilidade */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-3 pb-2.5 pt-10">
+          <div className="flex flex-wrap items-baseline gap-x-1.5">
+            <h3 className="font-display truncate text-base leading-tight text-white">
+              {professional.professionalName}
+            </h3>
+            <span className="flex shrink-0 items-center gap-0.5 text-xs text-white/85">
+              <span aria-hidden>📍</span>
+              {professional.city.name}
+            </span>
+          </div>
+        </div>
+      </Link>
+
+      <div className="flex gap-2 p-2.5">
+        {showWhatsapp ? (
+          <>
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex flex-[3] items-center justify-center gap-1.5 rounded-full bg-[#25D366] px-3 py-2 text-sm font-medium text-white transition-colors hover:brightness-95"
+            >
+              WhatsApp
+            </a>
+            <Link
+              href={profileHref}
+              className="inline-flex flex-[2] items-center justify-center rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-beige-soft"
+            >
+              Ver perfil
+            </Link>
+          </>
+        ) : (
+          <Link
+            href={profileHref}
+            className="inline-flex w-full items-center justify-center rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-beige-soft"
+          >
+            Ver perfil completo
+          </Link>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }
