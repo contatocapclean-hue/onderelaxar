@@ -76,17 +76,28 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   if (photos !== undefined) {
+    // Defesa extra contra fotos duplicadas: mesmo que o cliente envie a
+    // mesma URL mais de uma vez (ex.: um bug reconstruindo a lista a
+    // partir de profile_photo + galeria), nunca gravamos duas linhas com
+    // a mesma imagem para o mesmo profissional.
+    const seenUrls = new Set<string>();
+    const dedupedPhotos = (photos as { url: string; kind: string; order: number }[]).filter((p) => {
+      if (seenUrls.has(p.url)) return false;
+      seenUrls.add(p.url);
+      return true;
+    });
+
     await supabase!.from("photos").delete().eq("professional_id", id);
-    if (photos.length) {
+    if (dedupedPhotos.length) {
       await supabase!.from("photos").insert(
-        photos.map((p: { url: string; kind: string; order: number }) => ({
+        dedupedPhotos.map((p, i) => ({
           professional_id: id,
           image_url: p.url,
           kind: p.kind,
-          sort_order: p.order,
+          sort_order: i,
         }))
       );
-      await supabase!.from("professional_profiles").update({ profile_photo: photos[0].url }).eq("id", id);
+      await supabase!.from("professional_profiles").update({ profile_photo: dedupedPhotos[0].url }).eq("id", id);
     }
   }
 

@@ -7,10 +7,22 @@ import { isSupabaseConfigured } from "@/lib/mock-data";
 import type { ProfessionalProfile } from "@/lib/types";
 
 export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
-  const initial = [
-    ...(profile.profilePhoto ? [{ url: profile.profilePhoto, kind: "profile" as const, order: 0 }] : []),
+  // profile.profilePhoto é apenas um "cache" da URL da primeira foto da
+  // galeria (profile.photos[0]) — não é uma foto separada. Antes, esse
+  // valor era sempre inserido de novo na lista, criando uma cópia
+  // duplicada da foto principal a cada vez que o formulário era salvo
+  // (e a duplicata ficava ainda maior a cada salvamento seguinte). Agora
+  // deduplicamos por URL para montar a lista inicial com segurança.
+  const initialCandidates = [
+    ...(profile.profilePhoto ? [{ url: profile.profilePhoto, kind: "profile" as const, order: -1 }] : []),
     ...profile.photos.map((p) => ({ url: p.url, kind: p.kind, order: p.order })),
   ];
+  const seenUrls = new Set<string>();
+  const initial = initialCandidates.filter((p) => {
+    if (seenUrls.has(p.url)) return false;
+    seenUrls.add(p.url);
+    return true;
+  });
   const [photos, setPhotos] = useState(initial);
   const [coverPhoto, setCoverPhoto] = useState<string | null>(profile.coverPhoto);
   const [uploading, setUploading] = useState(false);
