@@ -25,7 +25,7 @@ export function ProfileView({
 }) {
   const router = useRouter();
 
-  const coverPhoto = professional.photos[0]?.url ?? professional.profilePhoto;
+  const coverPhoto = professional.coverPhoto ?? professional.photos[0]?.url ?? professional.profilePhoto;
   const totalPhotos = (professional.profilePhoto ? 1 : 0) + professional.photos.length;
 
   const whatsappDigits = professional.contact.whatsapp ? professional.contact.whatsapp.replace(/\D/g, "") : "";

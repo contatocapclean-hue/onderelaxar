@@ -53,6 +53,7 @@ export interface ProfessionalProfile {
   city: City;
   neighborhood: string;
   profilePhoto: string | null;
+  coverPhoto: string | null;
   attendanceType: AttendanceType;
   venueName: string | null;
   venueAddress: string | null;

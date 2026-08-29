@@ -94,7 +94,7 @@ export async function getCategories(): Promise<ServiceCategory[]> {
 
 const PROFILE_SELECT = `
   id, user_id, professional_name, slug, description, neighborhood,
-  profile_photo, attendance_type, venue_name, venue_address,
+  profile_photo, cover_photo, attendance_type, venue_name, venue_address,
   verification_status, profile_status, is_featured, featured_until,
   wallet_balance_cents, plan, created_at,
   city:cities ( id, name, state, slug, is_active ),
@@ -133,6 +133,7 @@ function mapRow(row: any): ProfessionalProfile {
     },
     neighborhood: row.neighborhood ?? "",
     profilePhoto: row.profile_photo,
+    coverPhoto: row.cover_photo,
     attendanceType: row.attendance_type,
     venueName: row.venue_name,
     venueAddress: row.venue_address,

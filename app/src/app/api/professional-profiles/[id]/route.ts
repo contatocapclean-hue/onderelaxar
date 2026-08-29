@@ -50,6 +50,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     categoryIds,
     photos,
     contact,
+    coverPhoto,
   } = body;
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -60,6 +61,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (attendanceType !== undefined) updates.attendance_type = attendanceType;
   if (venueName !== undefined) updates.venue_name = venueName || null;
   if (venueAddress !== undefined) updates.venue_address = venueAddress || null;
+  if (coverPhoto !== undefined) updates.cover_photo = coverPhoto || null;
 
   const { error } = await supabase!.from("professional_profiles").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

@@ -71,6 +71,7 @@ export const MOCK_PROFESSIONALS: ProfessionalProfile[] = names.map((name, i) => 
     city: c,
     neighborhood: neighborhoods[i % neighborhoods.length],
     profilePhoto: seededPhoto(slug),
+    coverPhoto: null,
     attendanceType: (["own_place", "client_home", "both"] as const)[i % 3],
     venueName: i % 3 !== 1 ? "Espaço Equilíbrio" : null,
     venueAddress: null,
