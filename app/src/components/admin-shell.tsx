@@ -46,7 +46,7 @@ export function AdminShell({
           ))}
         </nav>
       </aside>
-      <div>{children}</div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

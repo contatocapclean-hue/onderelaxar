@@ -100,7 +100,7 @@ export function VerificacaoForm({ verificationStatus }: { verificationStatus: Ve
       <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-beige-soft p-6 text-sm text-muted-foreground">
         Adicione ao menos uma foto ao seu perfil antes de verificar — vamos comparar sua selfie com as fotos
         que você já publicou.{" "}
-        <a href="/painel/fotos" className="text-primary hover:underline">
+        <a href="/painel/perfil?tab=fotos" className="text-primary hover:underline">
           Ir para Fotos
         </a>
       </div>

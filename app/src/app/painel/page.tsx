@@ -58,6 +58,10 @@ export default async function PainelPage() {
     );
   }
 
+  const conversionRate = profile.stats.views
+    ? ((profile.stats.whatsappClicks + profile.stats.contactClicks) / profile.stats.views) * 100
+    : 0;
+
   return (
     <div>
       {!isSupabaseConfigured() && (
@@ -89,12 +93,21 @@ export default async function PainelPage() {
         <StatCard label="Novos contatos" value={profile.stats.contactClicks} />
       </div>
 
+      <div className="mt-4 rounded-[var(--radius-md)] border border-border bg-surface p-5 card-shadow">
+        <p className="text-sm text-muted-foreground">Taxa de conversão em contato</p>
+        <p className="font-display text-2xl text-foreground">{conversionRate.toFixed(1)}%</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Perfis em destaque e verificados costumam receber mais visualizações. Complete seu perfil com fotos e
+          descrição detalhada para melhorar seus resultados.
+        </p>
+      </div>
+
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Link href="/painel/perfil" className="rounded-[var(--radius-md)] border border-border bg-surface p-5 hover:bg-beige-soft">
           <p className="font-medium text-foreground">Editar meu perfil</p>
           <p className="text-sm text-muted-foreground">Nome, descrição, cidade e bairro.</p>
         </Link>
-        <Link href="/painel/fotos" className="rounded-[var(--radius-md)] border border-border bg-surface p-5 hover:bg-beige-soft">
+        <Link href="/painel/perfil?tab=fotos" className="rounded-[var(--radius-md)] border border-border bg-surface p-5 hover:bg-beige-soft">
           <p className="font-medium text-foreground">Gerenciar fotos</p>
           <p className="text-sm text-muted-foreground">Foto principal e galeria.</p>
         </Link>

@@ -7,12 +7,7 @@ const NAV = [
   { href: "/painel", label: "Visão geral" },
   { href: "/painel/perfil", label: "Meu perfil" },
   { href: "/painel/verificacao", label: "Verificação" },
-  { href: "/painel/fotos", label: "Fotos" },
   { href: "/painel/carteira", label: "Carteira" },
-  { href: "/painel/servicos", label: "Serviços" },
-  { href: "/painel/local", label: "Local de atendimento" },
-  { href: "/painel/contatos", label: "Contatos" },
-  { href: "/painel/estatisticas", label: "Estatísticas" },
   { href: "/painel/configuracoes", label: "Configurações" },
 ];
 
@@ -62,7 +57,7 @@ export function DashboardShell({
           </button>
         </nav>
       </aside>
-      <div>{children}</div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }
