@@ -41,7 +41,7 @@ export function ProfileView({
     <div className="mx-auto max-w-3xl pb-24 sm:pb-10">
       {/* Capa + avatar */}
       <div className="relative">
-        <div className="relative -mx-5 aspect-[16/9] w-[calc(100%+2.5rem)] overflow-hidden bg-beige-soft sm:mx-0 sm:w-full sm:rounded-[var(--radius-lg)]">
+        <div className="relative -mx-5 aspect-[21/5] w-[calc(100%+2.5rem)] overflow-hidden bg-beige-soft sm:mx-0 sm:w-full sm:rounded-[var(--radius-lg)]">
           {coverPhoto && (
             <Image
               src={coverPhoto}
