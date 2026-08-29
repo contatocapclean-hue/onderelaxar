@@ -75,6 +75,20 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // Deixa a profissional escolher qual foto quer destacar como foto de
+  // perfil (avatar), em vez de depender da ordem em que as fotos foram
+  // enviadas. "Destacar" só reordena a lista, trazendo a foto escolhida
+  // para a primeira posição — é essa posição que já era usada como foto
+  // de perfil.
+  function makeProfilePhoto(index: number) {
+    setPhotos((prev) => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const copy = [...prev];
+      const [chosen] = copy.splice(index, 1);
+      return [chosen, ...copy];
+    });
+  }
+
   async function handleSave() {
     setSaving(true);
     setMessage(null);
@@ -121,7 +135,8 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
       </div>
 
       <p className="mb-4 text-sm text-muted-foreground">
-        A primeira foto abaixo é usada como foto de perfil (avatar).
+        A foto marcada como &quot;Perfil&quot; é usada como avatar do seu perfil. Clique na estrela de outra foto
+        para destacá-la no lugar.
         {!isSupabaseConfigured() && " (modo demonstração: alterações não são persistidas)"}
       </p>
       <div className="flex flex-wrap gap-3">
@@ -130,10 +145,26 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
             <Image src={p.url} alt="" fill className="object-cover" />
             <button
               onClick={() => removePhoto(i)}
+              aria-label="Remover foto"
               className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
             >
               ×
             </button>
+            {i === 0 ? (
+              <span className="absolute bottom-1 left-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
+                Perfil
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => makeProfilePhoto(i)}
+                aria-label="Destacar como foto de perfil"
+                title="Destacar como foto de perfil"
+                className="absolute bottom-1 left-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80"
+              >
+                ★
+              </button>
+            )}
           </div>
         ))}
         <label className="flex h-24 w-24 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-dashed border-border text-xs text-muted-foreground hover:bg-beige-soft">

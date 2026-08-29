@@ -15,10 +15,5 @@ export default async function PainelPerfilPage({ searchParams }: Props) {
   ]);
   if (!profile) redirect("/painel");
 
-  return (
-    <div>
-      <h1 className="font-display mb-6 text-2xl text-foreground">Meu perfil</h1>
-      <PerfilTabs profile={profile} cities={cities} categories={categories} initialTab={sp.tab} />
-    </div>
-  );
+  return <PerfilTabs profile={profile} cities={cities} categories={categories} initialTab={sp.tab} />;
 }
