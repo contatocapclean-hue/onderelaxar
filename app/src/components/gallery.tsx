@@ -33,22 +33,14 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
         className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-lg)] bg-beige-soft"
         aria-label="Ampliar foto"
       >
-        {/* Camada de fundo, desfocada, para preencher o quadro sem cortar a foto */}
-        <Image
-          src={all[active].url}
-          alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="scale-110 object-cover blur-2xl opacity-50"
-          aria-hidden
-        />
-        {/* Foto real, sempre inteira (sem corte) */}
+        {/* Prévia recortada para preencher todo o quadro, mesmo em fotos
+         * verticais. Ao clicar, o lightbox abaixo mostra a foto inteira. */}
         <Image
           src={all[active].url}
           alt={name}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-contain"
+          className="object-cover"
           priority
         />
         <span className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
