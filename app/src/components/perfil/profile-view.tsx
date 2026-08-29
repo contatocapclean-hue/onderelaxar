@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Gallery } from "@/components/gallery";
@@ -10,14 +9,6 @@ import { ReportButton } from "@/components/report-button";
 import { ReviewsSection } from "@/components/reviews-section";
 import { attendanceLabel, formatNumber } from "@/lib/utils";
 import type { ProfessionalProfile, Review } from "@/lib/types";
-
-const TABS = [
-  { key: "fotos", label: "Fotos" },
-  { key: "sobre", label: "Sobre mim" },
-  { key: "avaliacoes", label: "Avaliações" },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
 
 export function ProfileView({
   professional,
@@ -33,11 +24,9 @@ export function ProfileView({
   existingUserReview: Review | null;
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<TabKey>("fotos");
 
   const coverPhoto = professional.photos[0]?.url ?? professional.profilePhoto;
   const totalPhotos = (professional.profilePhoto ? 1 : 0) + professional.photos.length;
-  const averageRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   const whatsappDigits = professional.contact.whatsapp ? professional.contact.whatsapp.replace(/\D/g, "") : "";
   const showStickyWhatsapp = Boolean(whatsappDigits) && professional.contact.whatsappVisibility === "public";
@@ -45,15 +34,14 @@ export function ProfileView({
   const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
   function goToReport() {
-    setTab("sobre");
-    setTimeout(() => document.getElementById("denunciar")?.scrollIntoView({ behavior: "smooth" }), 50);
+    document.getElementById("denunciar")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
     <div className="mx-auto max-w-3xl pb-24 sm:pb-10">
       {/* Capa + avatar */}
       <div className="relative">
-        <div className="relative -mx-5 aspect-[4/5] w-[calc(100%+2.5rem)] overflow-hidden bg-beige-soft sm:mx-0 sm:aspect-[16/9] sm:w-full sm:rounded-[var(--radius-lg)]">
+        <div className="relative -mx-5 aspect-[16/9] w-[calc(100%+2.5rem)] overflow-hidden bg-beige-soft sm:mx-0 sm:w-full sm:rounded-[var(--radius-lg)]">
           {coverPhoto && (
             <Image
               src={coverPhoto}
@@ -128,26 +116,6 @@ export function ProfileView({
         </span>
       </div>
 
-      {/* Resumo de avaliações */}
-      <button
-        type="button"
-        onClick={() => setTab("avaliacoes")}
-        className="mx-1 mt-4 flex items-center justify-between rounded-[var(--radius-md)] border border-border bg-surface p-4 text-left card-shadow sm:mx-0"
-      >
-        <div>
-          <p className="text-sm font-medium text-foreground">Avaliações</p>
-          {reviews.length > 0 ? (
-            <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-              <span className="text-amber-500">★</span>
-              {averageRating.toFixed(1)} · {reviews.length} avaliaç{reviews.length === 1 ? "ão" : "ões"}
-            </p>
-          ) : (
-            <p className="mt-1 text-sm text-muted-foreground">Ainda sem avaliações</p>
-          )}
-        </div>
-        <span className="text-sm font-medium text-primary">Ver tudo →</span>
-      </button>
-
       {/* Atendimento + Localização */}
       <div className="mx-1 mt-4 grid grid-cols-1 gap-3 sm:mx-0 sm:grid-cols-2">
         <div className="rounded-[var(--radius-md)] border border-border bg-surface p-4 card-shadow">
@@ -166,98 +134,74 @@ export function ProfileView({
         </div>
       </div>
 
-      {/* Abas */}
-      <div className="mx-1 mt-6 border-b border-border sm:mx-0">
-        <div className="flex gap-6 overflow-x-auto">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTab(t.key)}
-              className={`shrink-0 border-b-2 pb-3 text-sm font-medium transition-colors ${
-                tab === t.key
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.key === "fotos"
-                ? `Fotos (${totalPhotos})`
-                : t.key === "avaliacoes"
-                  ? `Avaliações (${reviews.length})`
-                  : t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-1 mt-6 sm:mx-0">
-        {tab === "fotos" && (
+      {/* Fotos — exposto, sem aba */}
+      <section className="mx-1 mt-8 sm:mx-0">
+        <h2 className="font-display text-lg text-foreground">Fotos ({totalPhotos})</h2>
+        <div className="mt-3">
           <Gallery
             mainPhoto={professional.profilePhoto}
             photos={professional.photos}
             name={professional.professionalName}
           />
-        )}
+        </div>
+      </section>
 
-        {tab === "sobre" && (
-          <div>
-            <section>
-              <h2 className="font-display text-lg text-foreground">Sobre mim</h2>
-              <p className="mt-2 whitespace-pre-line leading-relaxed text-foreground/90">
-                {professional.description}
-              </p>
-            </section>
+      {/* Sobre mim — exposto logo após as fotos, sem aba */}
+      <div className="mx-1 mt-8 sm:mx-0">
+        <section>
+          <h2 className="font-display text-lg text-foreground">Sobre mim</h2>
+          <p className="mt-2 whitespace-pre-line leading-relaxed text-foreground/90">{professional.description}</p>
+        </section>
 
-            <section className="mt-6">
-              <h2 className="font-display text-lg text-foreground">Serviços oferecidos</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {professional.categories.map((c) => (
-                  <span key={c.slug} className="rounded-full bg-accent-soft px-3 py-1.5 text-sm text-primary">
-                    {c.name}
-                  </span>
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-6">
-              <h2 className="font-display text-lg text-foreground">Local de atendimento</h2>
-              <p className="mt-2 text-sm text-foreground/90">{attendanceLabel(professional.attendanceType)}</p>
-              {professional.venueName && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {professional.venueName} — {professional.neighborhood}, {professional.city.name}
-                </p>
-              )}
-            </section>
-
-            <section className="mt-8 border-t border-border pt-6">
-              <h2 className="font-display text-lg text-foreground">Formas de contato</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Os dados exibidos respeitam as preferências de privacidade do profissional.
-              </p>
-              <div className="mt-4">
-                <ContactButtons
-                  professionalId={professional.id}
-                  professionalName={professional.professionalName}
-                  contact={professional.contact}
-                />
-              </div>
-            </section>
-
-            <div id="denunciar" className="mt-8">
-              <ReportButton professionalId={professional.id} />
-            </div>
+        <section className="mt-6">
+          <h2 className="font-display text-lg text-foreground">Serviços oferecidos</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {professional.categories.map((c) => (
+              <span key={c.slug} className="rounded-full bg-accent-soft px-3 py-1.5 text-sm text-primary">
+                {c.name}
+              </span>
+            ))}
           </div>
-        )}
+        </section>
 
-        {tab === "avaliacoes" && (
-          <ReviewsSection
-            professionalId={professional.id}
-            reviews={reviews}
-            isLoggedIn={isLoggedIn}
-            isOwner={isOwner}
-            existingUserReview={existingUserReview}
-          />
-        )}
+        <section className="mt-6">
+          <h2 className="font-display text-lg text-foreground">Local de atendimento</h2>
+          <p className="mt-2 text-sm text-foreground/90">{attendanceLabel(professional.attendanceType)}</p>
+          {professional.venueName && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {professional.venueName} — {professional.neighborhood}, {professional.city.name}
+            </p>
+          )}
+        </section>
+
+        <section className="mt-8 border-t border-border pt-6">
+          <h2 className="font-display text-lg text-foreground">Formas de contato</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Os dados exibidos respeitam as preferências de privacidade do profissional.
+          </p>
+          <div className="mt-4">
+            <ContactButtons
+              professionalId={professional.id}
+              professionalName={professional.professionalName}
+              contact={professional.contact}
+            />
+          </div>
+        </section>
+
+        <div id="denunciar" className="mt-8">
+          <ReportButton professionalId={professional.id} />
+        </div>
+      </div>
+
+      {/* Avaliações — exposto no final do perfil, sem ser um botão */}
+      <div className="mx-1 sm:mx-0">
+        <ReviewsSection
+          professionalId={professional.id}
+          reviews={reviews}
+          isLoggedIn={isLoggedIn}
+          isOwner={isOwner}
+          existingUserReview={existingUserReview}
+        />
       </div>
 
       {/* Barra fixa de WhatsApp (mobile) */}
