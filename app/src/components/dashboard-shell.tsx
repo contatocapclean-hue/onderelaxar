@@ -39,7 +39,7 @@ export function DashboardShell({
 
   return (
     <div className="container-page grid gap-8 py-10 lg:grid-cols-[220px_1fr]">
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+      <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
         <nav className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
           {nav.map((item) => (
             <Link

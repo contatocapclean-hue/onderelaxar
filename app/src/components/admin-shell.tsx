@@ -26,7 +26,7 @@ export function AdminShell({
 
   return (
     <div className="container-page grid gap-8 py-10 lg:grid-cols-[220px_1fr]">
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+      <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
         <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Administração
         </p>
