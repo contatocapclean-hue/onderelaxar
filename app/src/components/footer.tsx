@@ -48,9 +48,16 @@ export async function Footer() {
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-3">Plataforma</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Política de conteúdo</li>
-            <li>Termos de uso</li>
-            <li>Privacidade</li>
+            <li>
+              <Link href="/termos" className="hover:text-primary transition-colors">
+                Termos de uso
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacidade" className="hover:text-primary transition-colors">
+                Privacidade
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
