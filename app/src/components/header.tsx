@@ -1,11 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getCurrentAuthUser, isCurrentUserAdmin } from "@/lib/data";
+import { getCurrentAuthUser, getCurrentUserProfessionalProfile, isCurrentUserAdmin } from "@/lib/data";
 import { HeaderLogoutButton } from "@/components/header-logout-button";
+import { AddStoryButton } from "@/components/add-story-button";
 
 export async function Header() {
   const user = await getCurrentAuthUser();
   const isAdmin = user ? await isCurrentUserAdmin() : false;
+  // Só profissionais com perfil cadastrado veem o atalho de story no
+  // cabeçalho — não faz sentido para quem ainda não tem perfil.
+  const profile = user ? await getCurrentUserProfessionalProfile() : null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
@@ -36,6 +40,7 @@ export async function Header() {
         <div className="flex items-center gap-2 shrink-0">
           {user ? (
             <>
+              {profile && <AddStoryButton />}
               <span className="hidden lg:inline text-sm text-muted-foreground">
                 Olá, {user.name || user.email}
               </span>

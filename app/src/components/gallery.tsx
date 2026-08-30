@@ -21,8 +21,15 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
+  // Proporção 4:5 no celular (pedido para casar com a referência), mas
+  // limitada a uma altura fixa a partir do breakpoint sm: em telas largas a
+  // coluna do perfil já tem até 768px, e manter 4:5 deixava a foto enorme
+  // (até ~960px de altura) na versão web. object-cover continua recortando
+  // a foto para preencher o quadro dos dois jeitos.
+  const mainBoxClass = "aspect-[4/5] sm:aspect-auto sm:h-[420px]";
+
   if (all.length === 0) {
-    return <div className="aspect-[4/5] w-full rounded-[var(--radius-lg)] bg-beige-soft" />;
+    return <div className={`${mainBoxClass} w-full rounded-[var(--radius-lg)] bg-beige-soft`} />;
   }
 
   return (
@@ -30,7 +37,7 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="group relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-lg)] bg-beige-soft"
+        className={`group relative block ${mainBoxClass} w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-lg)] bg-beige-soft`}
         aria-label="Ampliar foto"
       >
         {/* Prévia recortada para preencher todo o quadro, mesmo em fotos
@@ -116,10 +123,14 @@ function Lightbox({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
       onClick={onClose}
     >
+      {/* Botão de fechar maior e com fundo, mais fácil de acertar. Clicar na
+       * própria foto (não só no fundo) também fecha — antes só o fundo em
+       * volta da imagem fechava, e em fotos grandes sobrava pouco espaço
+       * "de fora" para clicar, dificultando fechar. */}
       <button
         onClick={onClose}
-        className="absolute right-4 top-4 text-3xl text-white/90 hover:text-white"
         aria-label="Fechar"
+        className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-2xl leading-none text-white hover:bg-black/80 sm:right-4 sm:top-4"
       >
         ×
       </button>
@@ -137,10 +148,7 @@ function Lightbox({
         </button>
       )}
 
-      <div
-        className="relative h-full max-h-[85vh] w-full max-w-4xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="relative h-full max-h-[85vh] w-full max-w-4xl" onClick={onClose}>
         <Image src={photos[active].url} alt={name} fill sizes="100vw" className="object-contain" />
       </div>
 

@@ -14,7 +14,6 @@ const TABS = [
   { key: "fotos", label: "Fotos" },
   { key: "servicos", label: "Serviços" },
   { key: "local", label: "Local de atendimento" },
-  { key: "contato", label: "Contato" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -67,6 +66,11 @@ export function PerfilTabs({
          * despercebidos pelas profissionais. */}
         <DestaqueStoriesForm profile={profile} pricing={pricing} stories={stories} />
         <PerfilForm profile={profile} cities={cities} />
+        {/* Contato deixou de ser uma aba própria e passou a ser mais um
+         * bloco aqui em Dados, junto com o resto das informações do perfil. */}
+        <div className="mt-6">
+          <ContatosForm profile={profile} />
+        </div>
       </div>
       <div className={active === "fotos" ? "" : "hidden"}>
         <FotosForm profile={profile} />
@@ -76,9 +80,6 @@ export function PerfilTabs({
       </div>
       <div className={active === "local" ? "" : "hidden"}>
         <LocalForm profile={profile} />
-      </div>
-      <div className={active === "contato" ? "" : "hidden"}>
-        <ContatosForm profile={profile} />
       </div>
     </div>
   );

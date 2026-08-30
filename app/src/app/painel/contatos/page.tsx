@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
-// Contato agora é uma sub-aba de "Meu perfil". Mantemos esta rota como
-// redirecionamento para não quebrar links/favoritos antigos.
+// Contato deixou de ser uma sub-aba própria e virou mais um bloco dentro de
+// "Dados". Mantemos esta rota como redirecionamento para não quebrar
+// links/favoritos antigos.
 export default function PainelContatosPage() {
-  redirect("/painel/perfil?tab=contato");
+  redirect("/painel/perfil?tab=dados");
 }
