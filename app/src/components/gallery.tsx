@@ -22,7 +22,7 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (all.length === 0) {
-    return <div className="aspect-[4/3] w-full rounded-[var(--radius-lg)] bg-beige-soft" />;
+    return <div className="aspect-[4/5] w-full rounded-[var(--radius-lg)] bg-beige-soft" />;
   }
 
   return (
@@ -30,7 +30,7 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-lg)] bg-beige-soft"
+        className="group relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-lg)] bg-beige-soft"
         aria-label="Ampliar foto"
       >
         {/* Prévia recortada para preencher todo o quadro, mesmo em fotos
