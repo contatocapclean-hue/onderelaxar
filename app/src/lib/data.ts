@@ -371,7 +371,21 @@ export async function getProfessionalBySlug(slug: string): Promise<ProfessionalP
     .single();
 
   if (!data) return null;
-  return mapRow(data);
+  const profile = mapRow(data);
+
+  // profile_statistics só pode ser lida pelo próprio dono via RLS, então a
+  // contagem embutida em PROFILE_SELECT sempre vem zerada para qualquer
+  // outro visitante. Buscamos a contagem real (só o número de views, sem os
+  // cliques de whatsapp/contato) através de uma função que lê isso com
+  // segurança para qualquer um.
+  const { data: viewCount } = await supabase!.rpc("get_profile_view_count", {
+    p_professional_id: profile.id,
+  });
+  if (typeof viewCount === "number") {
+    profile.stats = { ...profile.stats, views: viewCount };
+  }
+
+  return profile;
 }
 
 /** Retorna as avaliações de um profissional, mais recentes primeiro. */

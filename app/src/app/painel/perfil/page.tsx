@@ -1,5 +1,11 @@
 import { PerfilTabs } from "@/components/painel/perfil-tabs";
-import { getCategories, getCities, getCurrentUserProfessionalProfile } from "@/lib/data";
+import {
+  getCategories,
+  getCities,
+  getCurrentUserProfessionalProfile,
+  getOwnStories,
+  getWalletPricing,
+} from "@/lib/data";
 import { redirect } from "next/navigation";
 
 interface Props {
@@ -15,5 +21,16 @@ export default async function PainelPerfilPage({ searchParams }: Props) {
   ]);
   if (!profile) redirect("/painel");
 
-  return <PerfilTabs profile={profile} cities={cities} categories={categories} initialTab={sp.tab} />;
+  const [pricing, stories] = await Promise.all([getWalletPricing(), getOwnStories(profile.id)]);
+
+  return (
+    <PerfilTabs
+      profile={profile}
+      cities={cities}
+      categories={categories}
+      pricing={pricing}
+      stories={stories}
+      initialTab={sp.tab}
+    />
+  );
 }

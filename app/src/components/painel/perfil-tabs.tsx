@@ -6,7 +6,8 @@ import { FotosForm } from "./fotos-form";
 import { ServicosForm } from "./servicos-form";
 import { LocalForm } from "./local-form";
 import { ContatosForm } from "./contatos-form";
-import type { City, ProfessionalProfile, ServiceCategory } from "@/lib/types";
+import { DestaqueStoriesForm } from "./destaque-stories-form";
+import type { City, ProfessionalProfile, ServiceCategory, Story, WalletPricing } from "@/lib/types";
 
 const TABS = [
   { key: "dados", label: "Dados" },
@@ -26,11 +27,15 @@ export function PerfilTabs({
   profile,
   cities,
   categories,
+  pricing,
+  stories,
   initialTab,
 }: {
   profile: ProfessionalProfile;
   cities: City[];
   categories: ServiceCategory[];
+  pricing: WalletPricing;
+  stories: Story[];
   initialTab?: string;
 }) {
   const [active, setActive] = useState<TabKey>(isTabKey(initialTab) ? initialTab : "dados");
@@ -57,6 +62,10 @@ export function PerfilTabs({
       {/* Cada formulário fica sempre montado (só escondido com CSS) para não
        * perder dados digitados ao trocar de sub-aba antes de salvar. */}
       <div className={active === "dados" ? "" : "hidden"}>
+        {/* Destaque e Stories ficam num bloco separado, acima dos campos de
+         * dados: antes ficavam escondidos dentro da Carteira e passavam
+         * despercebidos pelas profissionais. */}
+        <DestaqueStoriesForm profile={profile} pricing={pricing} stories={stories} />
         <PerfilForm profile={profile} cities={cities} />
       </div>
       <div className={active === "fotos" ? "" : "hidden"}>
