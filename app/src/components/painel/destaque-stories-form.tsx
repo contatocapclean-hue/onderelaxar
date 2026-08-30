@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/mock-data";
+import { StoryPublishModal } from "@/components/story-publish-modal";
 import type { ProfessionalProfile, Story, WalletPricing } from "@/lib/types";
 
 function formatCents(cents: number): string {
@@ -70,63 +71,7 @@ export function DestaqueStoriesForm({
   // ---------------------------------------------------------------------
   // Stories
   // ---------------------------------------------------------------------
-  const [storyUploading, setStoryUploading] = useState(false);
-  const [storyMessage, setStoryMessage] = useState<string | null>(null);
   const canAffordStory = profile.walletBalanceCents >= pricing.storyPriceCents;
-
-  async function handleStoryFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
-    setStoryMessage(null);
-
-    if (demo) {
-      setStoryMessage("Modo demonstração: alterações não são persistidas.");
-      return;
-    }
-    if (!canAffordStory) {
-      setStoryMessage("Saldo insuficiente. Faça um depósito antes de publicar um story.");
-      return;
-    }
-
-    const mediaType = file.type.startsWith("video/") ? "video" : "image";
-    setStoryUploading(true);
-
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase!.auth.getUser();
-    if (!user) {
-      setStoryUploading(false);
-      setStoryMessage("Você precisa estar logado.");
-      return;
-    }
-
-    const path = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase!.storage.from("story-media").upload(path, file);
-    if (uploadError) {
-      setStoryUploading(false);
-      setStoryMessage(uploadError.message);
-      return;
-    }
-    const { data: pub } = supabase!.storage.from("story-media").getPublicUrl(path);
-
-    const { error: rpcError } = await supabase!.rpc("purchase_story", {
-      p_professional_id: profile.id,
-      p_media_url: pub.publicUrl,
-      p_media_type: mediaType,
-    });
-    setStoryUploading(false);
-
-    if (rpcError) {
-      setStoryMessage(rpcError.message);
-      return;
-    }
-
-    setStoryMessage("Story publicado! Ele fica visível por 24 horas.");
-    router.refresh();
-  }
 
   async function handleDeleteStory(id: string) {
     if (demo) return;
@@ -192,12 +137,23 @@ export function DestaqueStoriesForm({
           {!canAffordStory && (
             <p className="mb-3 text-sm text-amber-700">Saldo insuficiente — deposite antes de publicar.</p>
           )}
-          {storyMessage && <p className="mb-3 text-sm text-foreground/80">{storyMessage}</p>}
 
-          <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
-            {storyUploading ? "Enviando…" : "+ Publicar story"}
-            <input type="file" accept="image/*,video/*" hidden onChange={handleStoryFile} disabled={storyUploading} />
-          </label>
+          <StoryPublishModal
+            professionalId={profile.id}
+            walletBalanceCents={profile.walletBalanceCents}
+            storyPriceCents={pricing.storyPriceCents}
+            demo={demo}
+            onPublished={() => router.refresh()}
+            trigger={(open) => (
+              <button
+                type="button"
+                onClick={open}
+                className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+              >
+                + Publicar story
+              </button>
+            )}
+          />
 
           {activeStories.length > 0 && (
             <div className="mt-5 flex flex-wrap gap-3">
