@@ -38,6 +38,13 @@ export default async function PerfilPage({ params }: Props) {
   const isOwner = currentUser?.id === professional.userId;
   const existingUserReview = currentUser ? reviews.find((r) => r.reviewerId === currentUser.id) ?? null : null;
 
+  // Nota média a partir das reviews já carregadas acima — ainda não existe
+  // uma coluna pré-calculada, então soma/dividimos aqui mesmo.
+  const ratingCount = reviews.length;
+  const ratingAverage = ratingCount
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount
+    : null;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -51,14 +58,26 @@ export default async function PerfilPage({ params }: Props) {
     },
     image: professional.profilePhoto ?? undefined,
     description: professional.description,
+    ...(ratingAverage !== null && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: Number(ratingAverage.toFixed(1)),
+        reviewCount: ratingCount,
+      },
+    }),
   };
+
+  // JSON.stringify não escapa "<", então uma descrição/nome com "</script>"
+  // quebraria a tag e permitiria injetar HTML/script na página — escapamos
+  // manualmente antes de jogar no dangerouslySetInnerHTML.
+  const jsonLdHtml = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
 
   return (
     <div className="container-page py-6 sm:py-10">
       <ViewTracker professionalId={professional.id} />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml }}
       />
 
       {professional.profileStatus !== "published" && (
