@@ -7,7 +7,7 @@ import { VerifiedBadge } from "@/components/verified-badge";
 import { ContactButtons } from "@/components/contact-buttons";
 import { ReportButton } from "@/components/report-button";
 import { ReviewsSection } from "@/components/reviews-section";
-import { attendanceLabel, formatNumber } from "@/lib/utils";
+import { attendanceLabel, formatNumber, BLUR_DATA_URL } from "@/lib/utils";
 import type { ProfessionalProfile, Review } from "@/lib/types";
 
 export function ProfileView({
@@ -55,6 +55,8 @@ export function ProfileView({
               fill
               sizes="(max-width: 768px) 100vw, 768px"
               className="object-cover"
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
               priority
             />
           )}
@@ -94,6 +96,9 @@ export function ProfileView({
                 src={professional.profilePhoto}
                 alt={professional.professionalName}
                 fill
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
                 sizes="112px"
                 className="object-cover"
               />
