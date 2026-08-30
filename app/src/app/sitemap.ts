@@ -1,12 +1,11 @@
 import type { MetadataRoute } from "next";
-import { getCities, getCategories, getFeaturedProfessionals } from "@/lib/data";
+import { getCities, getFeaturedProfessionals } from "@/lib/data";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://exemplo-onderelaxar.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [cities, categories, professionals] = await Promise.all([
+  const [cities, professionals] = await Promise.all([
     getCities(),
-    getCategories(),
     getFeaturedProfessionals(100),
   ]);
 
@@ -16,14 +15,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const categoryUrls = categories.flatMap((cat) =>
-    cities.map((c) => ({
-      url: `${BASE_URL}/massagistas/${c.slug}?categoria=${cat.slug}`,
-      changeFrequency: "weekly" as const,
-      priority: 0.5,
-    }))
-  );
-
+  // Não incluímos aqui as URLs filtradas por categoria
+  // (/massagistas/{cidade}?categoria=x): a página em si declara como
+  // canônica sempre a versão sem filtro (ver generateMetadata em
+  // massagistas/[cidade]/page.tsx), então enviar essas URLs pro Google como
+  // páginas próprias no sitemap contradiz o canonical e pode prejudicar a
+  // indexação em vez de ajudar.
   const profileUrls = professionals.map((p) => ({
     url: `${BASE_URL}/perfil/${p.slug}`,
     changeFrequency: "weekly" as const,
@@ -33,7 +30,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: BASE_URL, changeFrequency: "daily", priority: 1 },
     ...cityUrls,
-    ...categoryUrls,
     ...profileUrls,
   ];
 }

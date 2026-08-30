@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   description:
     "Diretório de profissionais de massagem no Brasil. Descubra massoterapeutas por cidade, bairro e tipo de massagem, e agende com confiança.",
-  metadataBase: new URL("https://exemplo-onderelaxar.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://exemplo-onderelaxar.vercel.app"),
   openGraph: {
     type: "website",
     locale: "pt_BR",
