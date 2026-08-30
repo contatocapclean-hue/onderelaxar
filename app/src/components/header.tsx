@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getCurrentAuthUser, getCurrentUserProfessionalProfile, isCurrentUserAdmin } from "@/lib/data";
+import { getCurrentAuthUser, getCurrentUserProfessionalProfile, getWalletPricing, isCurrentUserAdmin } from "@/lib/data";
+import { isSupabaseConfigured } from "@/lib/mock-data";
 import { HeaderLogoutButton } from "@/components/header-logout-button";
 import { AddStoryButton } from "@/components/add-story-button";
 
@@ -10,6 +11,7 @@ export async function Header() {
   // Só profissionais com perfil cadastrado veem o atalho de story no
   // cabeçalho — não faz sentido para quem ainda não tem perfil.
   const profile = user ? await getCurrentUserProfessionalProfile() : null;
+  const pricing = profile ? await getWalletPricing() : null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
@@ -40,7 +42,14 @@ export async function Header() {
         <div className="flex items-center gap-2 shrink-0">
           {user ? (
             <>
-              {profile && <AddStoryButton />}
+              {profile && pricing && (
+                <AddStoryButton
+                  professionalId={profile.id}
+                  walletBalanceCents={profile.walletBalanceCents}
+                  storyPriceCents={pricing.storyPriceCents}
+                  demo={!isSupabaseConfigured()}
+                />
+              )}
               <span className="hidden lg:inline text-sm text-muted-foreground">
                 Olá, {user.name || user.email}
               </span>

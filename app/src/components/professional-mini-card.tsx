@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ProfessionalProfile } from "@/lib/types";
+import { BLUR_DATA_URL } from "@/lib/utils";
 
 /** Card compacto para a seção "Todas as outras profissionais" — mesmo
  * tamanho aproximado dos quadrados de categoria, bem menor que os cards de
@@ -17,6 +18,10 @@ export function ProfessionalMiniCard({ professional }: { professional: Professio
             src={professional.profilePhoto}
             alt={professional.professionalName}
             fill
+            loading="lazy"
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
+            quality={65}
             sizes="(max-width: 640px) 30vw, (max-width: 1024px) 16vw, 10vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />

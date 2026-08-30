@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Photo } from "@/lib/types";
+import { BLUR_DATA_URL } from "@/lib/utils";
 
 export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null; photos: Photo[]; name: string }) {
   // mainPhoto (a foto de perfil) é sempre a URL de uma das fotos já
@@ -48,6 +49,8 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
           className="object-cover"
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
           priority
         />
         <span className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -64,7 +67,17 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
                 i === active ? "border-primary" : "border-transparent"
               }`}
             >
-              <Image src={photo.url} alt="" fill sizes="64px" className="object-cover" />
+              <Image
+                src={photo.url}
+                alt=""
+                fill
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
+                quality={60}
+                sizes="64px"
+                className="object-cover"
+              />
             </button>
           ))}
         </div>
@@ -149,7 +162,15 @@ function Lightbox({
       )}
 
       <div className="relative h-full max-h-[85vh] w-full max-w-4xl" onClick={onClose}>
-        <Image src={photos[active].url} alt={name} fill sizes="100vw" className="object-contain" />
+        <Image
+          src={photos[active].url}
+          alt={name}
+          fill
+          sizes="100vw"
+          className="object-contain"
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
+        />
       </div>
 
       {photos.length > 1 && (

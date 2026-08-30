@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ProfessionalProfile } from "@/lib/types";
+import { BLUR_DATA_URL } from "@/lib/utils";
 import { VerifiedBadge } from "./verified-badge";
 
 function isNew(createdAt: string): boolean {
@@ -27,6 +28,10 @@ export function ProfessionalCard({ professional }: { professional: ProfessionalP
             src={professional.profilePhoto}
             alt={professional.professionalName}
             fill
+            loading="lazy"
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
+            quality={70}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />

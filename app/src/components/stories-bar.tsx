@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { Story } from "@/lib/types";
+import { BLUR_DATA_URL } from "@/lib/utils";
 
 const IMAGE_DURATION_MS = 5000;
 
@@ -67,7 +68,16 @@ export function StoriesBar({ stories }: { stories: Story[] }) {
                         className="h-full w-full object-cover"
                       />
                     ) : latest?.mediaUrl ? (
-                      <Image src={latest.mediaUrl} alt="" fill className="object-cover" />
+                      <Image
+                        src={latest.mediaUrl}
+                        alt=""
+                        fill
+                        loading="lazy"
+                        placeholder="blur"
+                        blurDataURL={BLUR_DATA_URL}
+                        sizes="64px"
+                        className="object-cover"
+                      />
                     ) : (
                       <span className="flex h-full w-full items-center justify-center text-lg text-foreground/60">
                         {g.professionalName.charAt(0)}
