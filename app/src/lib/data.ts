@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { shuffleArray } from "@/lib/utils";
 import {
   MOCK_CATEGORIES,
   MOCK_CITIES,
@@ -182,10 +183,15 @@ function mapRow(row: any): ProfessionalProfile {
   };
 }
 
+/** Perfis em destaque para exibir na home. Quando há mais destaques do que
+ * `limit`, a ordem é sorteada a cada chamada (rodízio) — assim nenhum
+ * profissional fica sempre por cima só por ter ativado o destaque mais
+ * recentemente; todo mundo tem a mesma chance de aparecer primeiro em
+ * qualquer visita. */
 export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalProfile[]> {
   if (!isSupabaseConfigured()) {
     const featured = MOCK_PROFESSIONALS.filter((p) => p.isFeatured);
-    if (featured.length) return featured.slice(0, limit);
+    if (featured.length) return shuffleArray(featured).slice(0, limit);
     // Enquanto nenhum profissional estiver marcado como destaque, mostramos
     // os últimos cadastrados no lugar.
     return [...MOCK_PROFESSIONALS]
@@ -195,16 +201,19 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
 
   const supabase = await createClient();
   const nowIso = new Date().toISOString();
+  // Sem .limit() aqui de propósito: buscamos todos os destaques ativos para
+  // poder sortear entre eles antes de cortar para `limit` — se limitássemos
+  // a query, o rodízio só rodaria entre os primeiros N já ordenados por
+  // data, deixando de fora quem tivesse ativado o destaque há mais tempo.
   const { data: featuredData } = await supabase!
     .from("professional_profiles")
     .select(PROFILE_SELECT)
     .eq("profile_status", "published")
     .eq("is_featured", true)
     .or(`featured_until.is.null,featured_until.gt.${nowIso}`)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: false });
 
-  if (featuredData && featuredData.length) return featuredData.map(mapRow);
+  if (featuredData && featuredData.length) return shuffleArray(featuredData.map(mapRow)).slice(0, limit);
 
   // Enquanto nenhum profissional estiver marcado como destaque, mostramos
   // os últimos cadastrados no lugar.
@@ -292,7 +301,13 @@ export async function getProfessionalsByCity(
         results = [...results].sort((a, b) => b.stats.views - a.stats.views);
         break;
       case "featured":
-        results = [...results].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
+        // Destaques primeiro, mas em ordem sorteada entre eles a cada
+        // chamada (rodízio) — sem isso, quem ativasse o destaque primeiro
+        // sempre apareceria na frente dos demais destaques.
+        results = [
+          ...shuffleArray(results.filter((p) => p.isFeatured)),
+          ...results.filter((p) => !p.isFeatured),
+        ];
         break;
       default:
         results = [...results].sort(
@@ -341,10 +356,16 @@ export async function getProfessionalsByCity(
     results = [...results].sort((a, b) => b.stats.views - a.stats.views);
   }
   if (filters.sort === "featured") {
-    // reordena em memória usando isFeatured "de fato" (considera
+    // Reordena em memória usando isFeatured "de fato" (considera
     // featured_until) — a ordenação feita na query acima usa a coluna
     // bruta, que pode estar desatualizada para um destaque já vencido.
-    results = [...results].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
+    // Destaques primeiro, mas em ordem sorteada entre eles a cada chamada
+    // (rodízio) — sem isso, quem ativasse o destaque primeiro sempre
+    // apareceria na frente dos demais destaques.
+    results = [
+      ...shuffleArray(results.filter((p) => p.isFeatured)),
+      ...results.filter((p) => !p.isFeatured),
+    ];
   }
 
   return results;
