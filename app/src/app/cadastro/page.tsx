@@ -4,24 +4,45 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthCard } from "@/components/auth-card";
+import { PasswordStrengthMeter } from "@/components/password-strength-meter";
 
 export default function CadastroPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
 
+  // Comparação sem diferenciar maiúsculas/minúsculas e ignorando espaço nas
+  // pontas — evita falso "não coincide" por causa de autocapitalize do
+  // celular, por exemplo. Só compara depois que a pessoa já preencheu os
+  // dois campos, pra não mostrar erro enquanto ela ainda está digitando.
+  const emailMismatch =
+    confirmEmail.length > 0 && email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase();
+  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
+    if (email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+      setError("Os e-mails digitados não coincidem.");
+      return;
+    }
+
     if (password.length < 6) {
       setError("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("As senhas digitadas não coincidem.");
       return;
     }
 
@@ -108,6 +129,21 @@ export default function CadastroPage() {
           />
         </div>
         <div>
+          <label className="mb-1 block text-sm font-medium text-foreground">Repita o e-mail</label>
+          <input
+            type="email"
+            required
+            autoComplete="off"
+            value={confirmEmail}
+            onChange={(e) => setConfirmEmail(e.target.value)}
+            onPaste={(e) => e.preventDefault()}
+            className={`w-full rounded-[var(--radius-sm)] border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary ${
+              emailMismatch ? "border-red-400" : "border-border"
+            }`}
+          />
+          {emailMismatch && <p className="mt-1 text-xs text-red-600">Os e-mails não coincidem.</p>}
+        </div>
+        <div>
           <label className="mb-1 block text-sm font-medium text-foreground">Senha</label>
           <input
             type="password"
@@ -116,6 +152,22 @@ export default function CadastroPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-[var(--radius-sm)] border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
           />
+          <PasswordStrengthMeter password={password} />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-foreground">Repita a senha</label>
+          <input
+            type="password"
+            required
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            onPaste={(e) => e.preventDefault()}
+            className={`w-full rounded-[var(--radius-sm)] border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary ${
+              passwordMismatch ? "border-red-400" : "border-border"
+            }`}
+          />
+          {passwordMismatch && <p className="mt-1 text-xs text-red-600">As senhas não coincidem.</p>}
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
