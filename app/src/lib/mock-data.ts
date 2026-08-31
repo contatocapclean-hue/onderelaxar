@@ -94,7 +94,7 @@ export const MOCK_PROFESSIONALS: ProfessionalProfile[] = names.map((name, i) => 
       phone: null,
       email: null,
       instagram: `@${slug.replace(/-/g, "")}`,
-      whatsappVisibility: "on_request",
+      whatsappVisibility: "public",
       phoneVisibility: "hidden",
       emailVisibility: "hidden",
       instagramVisibility: "public",
