@@ -7,6 +7,7 @@ import type { VerificationStatus } from "@/lib/types";
 interface StatusResponse {
   verificationStatus: VerificationStatus;
   configured: boolean;
+  emailConfirmed: boolean;
   hasEnoughPhotos: boolean;
   attemptsToday: number;
   maxAttemptsPerDay: number;
@@ -21,6 +22,9 @@ export function VerificacaoForm({ verificationStatus }: { verificationStatus: Ve
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [verified, setVerified] = useState(verificationStatus === "verified");
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailLinkSent, setEmailLinkSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/painel/verificacao")
@@ -70,6 +74,19 @@ export function VerificacaoForm({ verificationStatus }: { verificationStatus: Ve
     setPreviewUrl(null);
   }
 
+  async function handleSendConfirmationEmail() {
+    setSendingEmail(true);
+    setEmailError(null);
+    const res = await fetch("/api/painel/confirmar-email", { method: "POST" });
+    const data = await res.json();
+    setSendingEmail(false);
+    if (!res.ok || data.error) {
+      setEmailError(data.error ?? "Não foi possível enviar o e-mail agora. Tente novamente.");
+      return;
+    }
+    setEmailLinkSent(true);
+  }
+
   if (verified) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6 card-shadow">
@@ -91,6 +108,34 @@ export function VerificacaoForm({ verificationStatus }: { verificationStatus: Ve
     return (
       <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-beige-soft p-6 text-sm text-muted-foreground">
         A verificação automática ainda está sendo configurada. Volte em breve.
+      </div>
+    );
+  }
+
+  if (!status.emailConfirmed) {
+    return (
+      <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-beige-soft p-6 text-sm text-muted-foreground">
+        {emailLinkSent ? (
+          <p>
+            Enviamos um link de confirmação para o seu e-mail de cadastro. Abra seu e-mail e clique no link
+            para liberar a verificação de perfil. Se não encontrar, confira a caixa de spam.
+          </p>
+        ) : (
+          <>
+            <p>
+              Antes de verificar seu perfil, confirme o e-mail que você usou no cadastro — é rapidinho, vamos
+              te mandar um link.
+            </p>
+            <button
+              onClick={handleSendConfirmationEmail}
+              disabled={sendingEmail}
+              className="mt-4 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+            >
+              {sendingEmail ? "Enviando…" : "Enviar link de confirmação"}
+            </button>
+            {emailError && <p className="mt-2 text-sm text-red-600">{emailError}</p>}
+          </>
+        )}
       </div>
     );
   }
