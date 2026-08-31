@@ -9,7 +9,9 @@ export function ContatosForm({ profile }: { profile: ProfessionalProfile }) {
   const [phone, setPhone] = useState(profile.contact.phone ?? "");
   const [email, setEmail] = useState(profile.contact.email ?? "");
   const [instagram, setInstagram] = useState(profile.contact.instagram ?? "");
-  const [whatsappVisibility, setWhatsappVisibility] = useState<Visibility>(profile.contact.whatsappVisibility);
+  // O WhatsApp é o canal de contato principal da plataforma e sempre fica
+  // público — não existe seletor de visibilidade pra ele (ver ContactField).
+  const whatsappVisibility: Visibility = "public";
   const [phoneVisibility, setPhoneVisibility] = useState<Visibility>(profile.contact.phoneVisibility);
   const [emailVisibility, setEmailVisibility] = useState<Visibility>(profile.contact.emailVisibility);
   const [instagramVisibility, setInstagramVisibility] = useState<Visibility>(profile.contact.instagramVisibility);
@@ -42,7 +44,16 @@ export function ContatosForm({ profile }: { profile: ProfessionalProfile }) {
 
   return (
     <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border bg-surface p-6 card-shadow">
-      <ContactField label="WhatsApp" value={whatsapp} onChange={setWhatsapp} visibility={whatsappVisibility} onVisibility={setWhatsappVisibility} placeholder="55DDDNÚMERO" />
+      <ContactField
+        label="WhatsApp"
+        value={whatsapp}
+        onChange={setWhatsapp}
+        visibility={whatsappVisibility}
+        onVisibility={() => {}}
+        placeholder="55DDDNÚMERO"
+        visibilityLocked
+        lockedHint="Sempre visível no seu perfil"
+      />
       <ContactField label="Telefone" value={phone} onChange={setPhone} visibility={phoneVisibility} onVisibility={setPhoneVisibility} />
       <ContactField label="Instagram" value={instagram} onChange={setInstagram} visibility={instagramVisibility} onVisibility={setInstagramVisibility} placeholder="@seuusuario" />
       <ContactField label="E-mail" value={email} onChange={setEmail} visibility={emailVisibility} onVisibility={setEmailVisibility} />
