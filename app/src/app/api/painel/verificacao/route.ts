@@ -15,7 +15,7 @@ async function getOwnProfile(supabase: NonNullable<Awaited<ReturnType<typeof cre
 
   const { data: profile } = await supabase
     .from("professional_profiles")
-    .select("id, profile_photo, verification_status, photos(image_url, kind)")
+    .select("id, profile_photo, verification_status, email_confirmed_at, photos(image_url, kind)")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -45,6 +45,7 @@ export async function GET() {
   return NextResponse.json({
     verificationStatus: profile.verification_status,
     configured: isFaceVerificationConfigured(),
+    emailConfirmed: Boolean(profile.email_confirmed_at),
     hasEnoughPhotos: referenceCount > 0,
     attemptsToday: count ?? 0,
     maxAttemptsPerDay: MAX_ATTEMPTS_PER_DAY,
@@ -69,6 +70,13 @@ export async function POST(request: NextRequest) {
 
   if (profile.verification_status === "verified") {
     return NextResponse.json({ error: "Seu perfil já está verificado." }, { status: 400 });
+  }
+
+  if (!profile.email_confirmed_at) {
+    return NextResponse.json(
+      { error: "Confirme seu e-mail de cadastro antes de verificar seu perfil." },
+      { status: 400 }
+    );
   }
 
   const referenceUrls: string[] = [
