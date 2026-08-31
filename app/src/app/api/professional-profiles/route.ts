@@ -80,7 +80,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (contact) {
-    await supabase!.from("contact_info").insert({ professional_id: profile.id, ...contact });
+    // WhatsApp é o canal de contato principal da plataforma e sempre fica
+    // público — forçado aqui no servidor (não só no formulário) pra não dar
+    // pra esconder chamando a API diretamente.
+    await supabase!
+      .from("contact_info")
+      .insert({ professional_id: profile.id, ...contact, whatsapp_visibility: "public" });
   }
 
   return NextResponse.json({ ok: true, slug: profile.slug, status: profile.profile_status });
