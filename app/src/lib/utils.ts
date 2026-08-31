@@ -41,6 +41,35 @@ export function shuffleArray<T>(items: T[]): T[] {
   return arr;
 }
 
+export interface PasswordStrengthResult {
+  score: 0 | 1 | 2 | 3 | 4;
+  label: string;
+}
+
+const STRENGTH_LABELS = ["Muito fraca", "Fraca", "Média", "Forte", "Muito forte"];
+
+/** Heurística simples de força de senha — soma pontos por comprimento e por
+ * variedade de tipo de caractere (minúscula+maiúscula, número, símbolo).
+ * Não é tão sofisticada quanto uma lib como zxcvbn, mas dá um retorno visual
+ * imediato o suficiente para desencorajar senhas óbvias tipo "123456", sem
+ * precisar adicionar dependência nova ao projeto. */
+export function passwordStrength(password: string): PasswordStrengthResult {
+  if (!password) return { score: 0, label: "" };
+
+  let score = 0;
+  if (password.length >= 6) score++;
+  if (password.length >= 10) score++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+  // Senha curta demais não passa de "fraca", mesmo com símbolo/número.
+  if (password.length < 6) score = Math.min(score, 1);
+
+  const capped = Math.min(score, 4) as 0 | 1 | 2 | 3 | 4;
+  return { score: capped, label: STRENGTH_LABELS[capped] };
+}
+
 // Placeholder usado como `blurDataURL` nas fotos vindas do Supabase Storage
 // (URLs remotas não geram blur automático como imagens importadas
 // estaticamente). É só um retângulo na cor do skeleton já usado no site
