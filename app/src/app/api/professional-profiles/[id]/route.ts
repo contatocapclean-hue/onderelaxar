@@ -102,7 +102,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   if (contact !== undefined) {
-    await supabase!.from("contact_info").upsert({ professional_id: id, ...contact });
+    // WhatsApp é o canal de contato principal da plataforma e sempre fica
+    // público — forçado aqui no servidor (não só no formulário) pra não dar
+    // pra esconder chamando a API diretamente.
+    await supabase!
+      .from("contact_info")
+      .upsert({ professional_id: id, ...contact, whatsapp_visibility: "public" });
   }
 
   return NextResponse.json({ ok: true });
