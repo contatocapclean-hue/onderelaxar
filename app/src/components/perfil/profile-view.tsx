@@ -35,7 +35,10 @@ export function ProfileView({
   ]).size;
 
   const whatsappDigits = professional.contact.whatsapp ? professional.contact.whatsapp.replace(/\D/g, "") : "";
-  const showStickyWhatsapp = Boolean(whatsappDigits) && professional.contact.whatsappVisibility === "public";
+  // WhatsApp é o canal de contato principal da plataforma e sempre é
+  // exibido quando o profissional cadastrou um número — não depende mais de
+  // visibilidade configurável (ver ContactField / contatos-form.tsx).
+  const showStickyWhatsapp = Boolean(whatsappDigits);
   const whatsappMessage = `Olá ${professional.professionalName}, encontrei seu perfil no www.onderelaxar.com.br. Gostaria de saber mais informações.`;
   const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
