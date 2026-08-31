@@ -72,13 +72,13 @@ export function ProfessionalCard({ professional }: { professional: ProfessionalP
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex flex-[3] items-center justify-center gap-1.5 rounded-full bg-[#25D366] px-3 py-2 text-sm font-medium text-white transition-colors hover:brightness-95"
+              className="inline-flex flex-[2] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25D366] px-2 py-2 text-sm font-medium text-white transition-colors hover:brightness-95"
             >
               WhatsApp
             </a>
             <Link
               href={profileHref}
-              className="inline-flex flex-[2] items-center justify-center rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-beige-soft"
+              className="inline-flex flex-[3] items-center justify-center whitespace-nowrap rounded-full border border-border px-2 py-2 text-sm font-medium text-foreground transition-colors hover:bg-beige-soft"
             >
               Ver perfil
             </Link>
