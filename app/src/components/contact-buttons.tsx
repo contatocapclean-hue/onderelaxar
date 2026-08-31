@@ -27,13 +27,14 @@ export function ContactButtons({
   const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const hasOnRequest =
-    contact.whatsappVisibility === "on_request" ||
     contact.phoneVisibility === "on_request" ||
     contact.emailVisibility === "on_request" ||
     contact.instagramVisibility === "on_request";
 
-  const showWhatsapp =
-    contact.whatsapp && (contact.whatsappVisibility === "public" || (contact.whatsappVisibility === "on_request" && revealed));
+  // WhatsApp é o canal de contato principal da plataforma e sempre é
+  // exibido quando cadastrado — não depende mais de visibilidade
+  // configurável (ver ContactField / contatos-form.tsx).
+  const showWhatsapp = Boolean(contact.whatsapp);
   const showPhone =
     contact.phone && (contact.phoneVisibility === "public" || (contact.phoneVisibility === "on_request" && revealed));
   const showEmail =

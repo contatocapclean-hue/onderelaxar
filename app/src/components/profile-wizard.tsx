@@ -47,7 +47,9 @@ export function ProfileWizard({ cities, categories }: Props) {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [instagram, setInstagram] = useState("");
-  const [whatsappVisibility, setWhatsappVisibility] = useState<Visibility>("on_request");
+  // O WhatsApp é o canal de contato principal da plataforma e sempre fica
+  // público — não existe seletor de visibilidade pra ele (ver ContactField).
+  const whatsappVisibility: Visibility = "public";
   const [phoneVisibility, setPhoneVisibility] = useState<Visibility>("hidden");
   const [emailVisibility, setEmailVisibility] = useState<Visibility>("hidden");
   const [instagramVisibility, setInstagramVisibility] = useState<Visibility>("public");
@@ -291,7 +293,16 @@ export function ProfileWizard({ cities, categories }: Props) {
             <p className="text-sm text-muted-foreground">
               Escolha o que preencher e como cada informação deve aparecer no seu perfil público.
             </p>
-            <ContactField label="WhatsApp" value={whatsapp} onChange={setWhatsapp} visibility={whatsappVisibility} onVisibility={setWhatsappVisibility} placeholder="55DDDNÚMERO" />
+            <ContactField
+              label="WhatsApp"
+              value={whatsapp}
+              onChange={setWhatsapp}
+              visibility={whatsappVisibility}
+              onVisibility={() => {}}
+              placeholder="55DDDNÚMERO"
+              visibilityLocked
+              lockedHint="Sempre visível no seu perfil"
+            />
             <ContactField label="Telefone" value={phone} onChange={setPhone} visibility={phoneVisibility} onVisibility={setPhoneVisibility} />
             <ContactField label="Instagram" value={instagram} onChange={setInstagram} visibility={instagramVisibility} onVisibility={setInstagramVisibility} placeholder="@seuusuario" />
             <ContactField label="E-mail" value={email} onChange={setEmail} visibility={emailVisibility} onVisibility={setEmailVisibility} />
