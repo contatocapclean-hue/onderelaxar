@@ -187,16 +187,20 @@ function mapRow(row: any): ProfessionalProfile {
  * `limit`, a ordem é sorteada a cada chamada (rodízio) — assim nenhum
  * profissional fica sempre por cima só por ter ativado o destaque mais
  * recentemente; todo mundo tem a mesma chance de aparecer primeiro em
- * qualquer visita. */
+ * qualquer visita. Enquanto não há ninguém em destaque, caímos para os
+ * últimos cadastrados — mas o rodízio de ordem continua valendo aqui
+ * também, senão essa lista de "recentes" ficaria sempre na mesma ordem
+ * fixa pra todo mundo. */
 export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalProfile[]> {
   if (!isSupabaseConfigured()) {
     const featured = MOCK_PROFESSIONALS.filter((p) => p.isFeatured);
     if (featured.length) return shuffleArray(featured).slice(0, limit);
     // Enquanto nenhum profissional estiver marcado como destaque, mostramos
-    // os últimos cadastrados no lugar.
-    return [...MOCK_PROFESSIONALS]
+    // os últimos cadastrados no lugar (também com rodízio de ordem).
+    const recent = [...MOCK_PROFESSIONALS]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, limit);
+    return shuffleArray(recent);
   }
 
   const supabase = await createClient();
@@ -216,7 +220,7 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
   if (featuredData && featuredData.length) return shuffleArray(featuredData.map(mapRow)).slice(0, limit);
 
   // Enquanto nenhum profissional estiver marcado como destaque, mostramos
-  // os últimos cadastrados no lugar.
+  // os últimos cadastrados no lugar (também com rodízio de ordem).
   const { data: recentData } = await supabase!
     .from("professional_profiles")
     .select(PROFILE_SELECT)
@@ -224,7 +228,7 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  return (recentData ?? []).map(mapRow);
+  return shuffleArray((recentData ?? []).map(mapRow));
 }
 
 /** Demais profissionais publicados, fora dos já exibidos em destaque —
