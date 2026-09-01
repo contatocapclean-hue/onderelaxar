@@ -22,70 +22,47 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  // Proporção 4:5 (retrato) em qualquer tamanho de tela — as fotos enviadas
-  // pelas profissionais já são verticais, e recortá-las na horizontal
-  // (como era antes na versão web) escondia a maior parte da foto até
-  // clicar em "Ampliar". Só limitamos a altura máxima: em telas largas a
-  // coluna do perfil chega a 768px, e manter 4:5 sem limite deixaria a
-  // foto enorme (~960px de altura). Com o limite, o quadro fica vertical
-  // no celular e um pouco mais recortado nas laterais no desktop, mas
-  // nunca passa de 560px de altura. object-cover continua recortando a
-  // foto para preencher o quadro dos dois jeitos.
-  const mainBoxClass = "aspect-[4/5] max-h-[560px]";
+  // Cada foto aparece na vertical (proporção 2:3, próxima do enquadramento
+  // que as profissionais já enviam), organizadas em grade de até 2 colunas
+  // — não tem mais uma "foto principal" grande e recortada na horizontal
+  // com uma fileira de miniaturas embaixo, que escondia a maior parte da
+  // foto até clicar em "Ampliar". Com 1 foto só, ela fica centralizada em
+  // vez de esticada; com 2 ou mais, ficam lado a lado, no máximo 2 por
+  // linha. object-cover recorta o quadro, mas o quadro em si já é vertical,
+  // então sobra bem menos foto de fora do que antes.
+  const itemClass =
+    "group relative aspect-[2/3] max-h-[620px] w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-lg)] bg-beige-soft";
 
   if (all.length === 0) {
-    return <div className={`${mainBoxClass} w-full rounded-[var(--radius-lg)] bg-beige-soft`} />;
+    return <div className={`${itemClass} mx-auto max-w-sm`} />;
+  }
+
+  function openAt(i: number) {
+    setActive(i);
+    setLightboxOpen(true);
   }
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setLightboxOpen(true)}
-        className={`group relative block ${mainBoxClass} w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-lg)] bg-beige-soft`}
-        aria-label="Ampliar foto"
-      >
-        {/* Prévia recortada para preencher todo o quadro, mesmo em fotos
-         * verticais. Ao clicar, o lightbox abaixo mostra a foto inteira. */}
-        <Image
-          src={all[active].url}
-          alt={name}
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover"
-          placeholder="blur"
-          blurDataURL={BLUR_DATA_URL}
-          priority
-        />
-        <span className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-          Ampliar
-        </span>
-      </button>
-      {all.length > 1 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto">
-          {all.map((photo, i) => (
-            <button
-              key={photo.id}
-              onClick={() => setActive(i)}
-              className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-sm)] border-2 transition-colors ${
-                i === active ? "border-primary" : "border-transparent"
-              }`}
-            >
-              <Image
-                src={photo.url}
-                alt=""
-                fill
-                loading="lazy"
-                placeholder="blur"
-                blurDataURL={BLUR_DATA_URL}
-                quality={60}
-                sizes="64px"
-                className="object-cover"
-              />
-            </button>
-          ))}
-        </div>
-      )}
+      <div className={all.length === 1 ? "mx-auto max-w-sm" : "grid grid-cols-2 gap-2"}>
+        {all.map((photo, i) => (
+          <button key={photo.id} type="button" onClick={() => openAt(i)} className={itemClass} aria-label="Ampliar foto">
+            <Image
+              src={photo.url}
+              alt={name}
+              fill
+              sizes="(max-width: 640px) 46vw, 380px"
+              className="object-cover"
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+              priority={i < 2}
+            />
+            <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2.5 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+              Ampliar
+            </span>
+          </button>
+        ))}
+      </div>
 
       {lightboxOpen && (
         <Lightbox
