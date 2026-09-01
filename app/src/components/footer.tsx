@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MOCK_CITIES } from "@/lib/mock-data";
-import { getSiteSettings } from "@/lib/data";
+import { getCities, getSiteSettings } from "@/lib/data";
 
 export async function Footer() {
-  const settings = await getSiteSettings();
+  // Antes usava a lista fixa de cidades de demonstração (MOCK_CITIES) mesmo
+  // em produção — o rodapé nunca refletia cidades novas nem desativadas
+  // pelo admin. getCities() já retorna só as ativas, ordenadas por nome.
+  const [settings, cities] = await Promise.all([getSiteSettings(), getCities()]);
 
   return (
     <footer className="border-t border-border bg-beige-soft mt-24">
@@ -19,7 +21,7 @@ export async function Footer() {
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-3">Cidades</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            {MOCK_CITIES.map((c) => (
+            {cities.map((c) => (
               <li key={c.slug}>
                 <Link href={`/massagistas/${c.slug}`} className="hover:text-primary transition-colors">
                   {c.name}
