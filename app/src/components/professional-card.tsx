@@ -40,19 +40,26 @@ export function ProfessionalCard({ professional }: { professional: ProfessionalP
           />
         )}
 
-        <div className="absolute left-3 top-3 flex flex-col gap-1.5">
-          {professional.verificationStatus === "verified" && <VerifiedBadge />}
+        {/* Verificado fica sozinho no canto esquerdo; Novo e Destaque ficam
+         * empilhados no canto direito — assim nenhum badge fica um em cima
+         * do outro na mesma linha/canto. */}
+        {professional.verificationStatus === "verified" && (
+          <div className="absolute left-3 top-3">
+            <VerifiedBadge />
+          </div>
+        )}
+        <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
           {isNew(professional.createdAt) && (
             <span className="inline-flex w-fit items-center rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-primary">
               Novo
             </span>
           )}
+          {professional.isFeatured && (
+            <span className="inline-flex w-fit items-center rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
+              Destaque
+            </span>
+          )}
         </div>
-        {professional.isFeatured && (
-          <span className="absolute right-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
-            Destaque
-          </span>
-        )}
 
         {/* Nome + cidade sobrepostos na própria foto, com gradiente para legibilidade */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-3 pb-2.5 pt-10">
