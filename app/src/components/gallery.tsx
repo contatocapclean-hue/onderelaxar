@@ -22,12 +22,16 @@ export function Gallery({ mainPhoto, photos, name }: { mainPhoto: string | null;
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  // Proporção 4:5 no celular (pedido para casar com a referência), mas
-  // limitada a uma altura fixa a partir do breakpoint sm: em telas largas a
-  // coluna do perfil já tem até 768px, e manter 4:5 deixava a foto enorme
-  // (até ~960px de altura) na versão web. object-cover continua recortando
-  // a foto para preencher o quadro dos dois jeitos.
-  const mainBoxClass = "aspect-[4/5] sm:aspect-auto sm:h-[420px]";
+  // Proporção 4:5 (retrato) em qualquer tamanho de tela — as fotos enviadas
+  // pelas profissionais já são verticais, e recortá-las na horizontal
+  // (como era antes na versão web) escondia a maior parte da foto até
+  // clicar em "Ampliar". Só limitamos a altura máxima: em telas largas a
+  // coluna do perfil chega a 768px, e manter 4:5 sem limite deixaria a
+  // foto enorme (~960px de altura). Com o limite, o quadro fica vertical
+  // no celular e um pouco mais recortado nas laterais no desktop, mas
+  // nunca passa de 560px de altura. object-cover continua recortando a
+  // foto para preencher o quadro dos dois jeitos.
+  const mainBoxClass = "aspect-[4/5] max-h-[560px]";
 
   if (all.length === 0) {
     return <div className={`${mainBoxClass} w-full rounded-[var(--radius-lg)] bg-beige-soft`} />;
