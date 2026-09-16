@@ -4,6 +4,7 @@ import {
   getCities,
   getCurrentUserProfessionalProfile,
   getOwnStories,
+  getSiteSettings,
   getWalletPricing,
 } from "@/lib/data";
 import { redirect } from "next/navigation";
@@ -21,7 +22,11 @@ export default async function PainelPerfilPage({ searchParams }: Props) {
   ]);
   if (!profile) redirect("/painel");
 
-  const [pricing, stories] = await Promise.all([getWalletPricing(), getOwnStories(profile.id)]);
+  const [pricing, stories, settings] = await Promise.all([
+    getWalletPricing(),
+    getOwnStories(profile.id),
+    getSiteSettings(),
+  ]);
 
   return (
     <PerfilTabs
@@ -30,6 +35,7 @@ export default async function PainelPerfilPage({ searchParams }: Props) {
       categories={categories}
       pricing={pricing}
       stories={stories}
+      featuredExample={settings.featuredExample}
       initialTab={sp.tab}
     />
   );
