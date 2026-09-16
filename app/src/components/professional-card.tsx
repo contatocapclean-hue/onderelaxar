@@ -8,7 +8,16 @@ function isNew(createdAt: string): boolean {
   return Date.now() - new Date(createdAt).getTime() < 1000 * 60 * 60 * 24 * 21;
 }
 
-export function ProfessionalCard({ professional }: { professional: ProfessionalProfile }) {
+export function ProfessionalCard({
+  professional,
+  imageAspectClassName = "aspect-[4/5]",
+}: {
+  professional: ProfessionalProfile;
+  /** Permite ajustar a proporção da foto por contexto de uso (ex.: cards em
+   * destaque na home ficam 3:4 no mobile) sem afetar quem não passar essa
+   * prop, como a listagem por cidade. */
+  imageAspectClassName?: string;
+}) {
   const profileHref = `/perfil/${professional.slug}`;
   const whatsappDigits = professional.contact?.whatsapp
     ? professional.contact.whatsapp.replace(/\D/g, "")
@@ -24,7 +33,7 @@ export function ProfessionalCard({ professional }: { professional: ProfessionalP
     <div className="group overflow-hidden rounded-[var(--radius-lg)] bg-surface card-shadow border border-border transition-transform hover:-translate-y-0.5">
       <Link
         href={profileHref}
-        className="relative block aspect-[4/5] w-full overflow-hidden bg-beige-soft"
+        className={`relative block ${imageAspectClassName} w-full overflow-hidden bg-beige-soft`}
       >
         {professional.profilePhoto && (
           <Image
