@@ -11,12 +11,18 @@ function isNew(createdAt: string): boolean {
 export function ProfessionalCard({
   professional,
   imageAspectClassName = "aspect-[4/5]",
+  disabled = false,
 }: {
   professional: ProfessionalProfile;
   /** Permite ajustar a proporção da foto por contexto de uso (ex.: cards em
    * destaque na home ficam 3:4 no mobile) sem afetar quem não passar essa
    * prop, como a listagem por cidade. */
   imageAspectClassName?: string;
+  /** Usado para a prévia de "como fica em destaque" no painel: desativa
+   * todos os links/botões (o card vira só ilustrativo, não navega pra
+   * lugar nenhum) e mostra um selo "Prévia" no lugar do selo de
+   * verificado. O visual continua idêntico ao card real. */
+  disabled?: boolean;
 }) {
   const profileHref = `/perfil/${professional.slug}`;
   const whatsappDigits = professional.contact?.whatsapp
@@ -30,9 +36,13 @@ export function ProfessionalCard({
   const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <div className="group overflow-hidden rounded-[var(--radius-lg)] bg-surface card-shadow border border-border transition-transform hover:-translate-y-0.5">
+    <div
+      className={`group overflow-hidden rounded-[var(--radius-lg)] bg-surface card-shadow border border-border transition-transform hover:-translate-y-0.5 ${disabled ? "pointer-events-none select-none" : ""}`}
+    >
       <Link
         href={profileHref}
+        tabIndex={disabled ? -1 : undefined}
+        aria-hidden={disabled || undefined}
         className={`relative block ${imageAspectClassName} w-full overflow-hidden bg-beige-soft`}
       >
         {professional.profilePhoto && (
@@ -52,10 +62,18 @@ export function ProfessionalCard({
         {/* Verificado fica sozinho no canto esquerdo; Novo e Destaque ficam
          * empilhados no canto direito — assim nenhum badge fica um em cima
          * do outro na mesma linha/canto. */}
-        {professional.verificationStatus === "verified" && (
+        {disabled ? (
           <div className="absolute left-3 top-3">
-            <VerifiedBadge />
+            <span className="inline-flex w-fit items-center rounded-full bg-foreground/80 px-2.5 py-1 text-xs font-medium text-background">
+              Prévia
+            </span>
           </div>
+        ) : (
+          professional.verificationStatus === "verified" && (
+            <div className="absolute left-3 top-3">
+              <VerifiedBadge />
+            </div>
+          )
         )}
         <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
           {isNew(professional.createdAt) && (
@@ -105,6 +123,8 @@ export function ProfessionalCard({
         ) : (
           <Link
             href={profileHref}
+            tabIndex={disabled ? -1 : undefined}
+            aria-hidden={disabled || undefined}
             className="inline-flex w-full items-center justify-center rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-beige-soft"
           >
             Ver perfil completo
