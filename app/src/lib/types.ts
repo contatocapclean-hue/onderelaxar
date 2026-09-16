@@ -82,6 +82,16 @@ export interface SiteSettings {
     mediaType: "image" | "video" | null;
     updatedAt: string | null;
   };
+  /** Card de exemplo configurado pelo admin em Configurações, exibido no
+   * painel de todas as profissionais (bloco "Destacar meu perfil") para
+   * mostrar como fica um perfil em destaque — sem custar nada e sem
+   * depender de um perfil real. */
+  featuredExample: {
+    name: string | null;
+    cityLabel: string | null;
+    photoUrl: string | null;
+    updatedAt: string | null;
+  };
 }
 
 export interface Review {

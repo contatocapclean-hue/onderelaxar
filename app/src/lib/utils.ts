@@ -1,7 +1,55 @@
 import { clsx, type ClassValue } from "clsx";
+import type { ProfessionalProfile, SiteSettings } from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
+}
+
+/** Monta um ProfessionalProfile "fake" a partir do card de exemplo do
+ * destaque (configurado pelo admin em Configurações), só para renderizar
+ * com o mesmo ProfessionalCard usado na home — garante que a prévia
+ * mostrada às profissionais seja pixel-a-pixel igual ao que aparece de
+ * verdade quando alguém ativa o destaque. Fica em utils.ts (não em data.ts)
+ * de propósito: precisa ser importável de componentes client, e data.ts
+ * carrega o client do Supabase de servidor. Nunca é salvo no banco nem tem
+ * link real (ver prop `disabled` do ProfessionalCard). */
+export function buildFeaturedExampleProfile(example: SiteSettings["featuredExample"]): ProfessionalProfile {
+  return {
+    id: "exemplo-destaque",
+    userId: "",
+    professionalName: example.name?.trim() || "Nome de exemplo",
+    slug: "exemplo",
+    description: "",
+    city: { id: "", name: example.cityLabel?.trim() || "Sua cidade", state: "", slug: "", isActive: true },
+    neighborhood: "",
+    profilePhoto: example.photoUrl,
+    coverPhoto: null,
+    attendanceType: "both",
+    venueName: null,
+    venueAddress: null,
+    verificationStatus: "unverified",
+    profileStatus: "published",
+    isFeatured: true,
+    featuredUntil: null,
+    plan: "featured",
+    // Data antiga de propósito, pra nunca mostrar o selo "Novo" junto do
+    // selo "Destaque" no card de exemplo.
+    createdAt: "2020-01-01T00:00:00.000Z",
+    categories: [],
+    photos: [],
+    contact: {
+      whatsapp: null,
+      phone: null,
+      email: null,
+      instagram: null,
+      whatsappVisibility: "hidden",
+      phoneVisibility: "hidden",
+      emailVisibility: "hidden",
+      instagramVisibility: "hidden",
+    },
+    stats: { views: 0, whatsappClicks: 0, contactClicks: 0 },
+    walletBalanceCents: 0,
+  };
 }
 
 export function slugify(input: string): string {

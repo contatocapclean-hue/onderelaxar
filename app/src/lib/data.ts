@@ -58,7 +58,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   const { data } = await supabase!
     .from("site_settings")
     .select(
-      "hero_badge, hero_title, hero_subtitle, cta_title, cta_subtitle, footer_description, system_story_media_url, system_story_media_type, system_story_updated_at"
+      "hero_badge, hero_title, hero_subtitle, cta_title, cta_subtitle, footer_description, system_story_media_url, system_story_media_type, system_story_updated_at, featured_example_name, featured_example_city_label, featured_example_photo_url, featured_example_updated_at"
     )
     .eq("id", 1)
     .single();
@@ -76,6 +76,12 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       mediaUrl: data.system_story_media_url,
       mediaType: data.system_story_media_type,
       updatedAt: data.system_story_updated_at,
+    },
+    featuredExample: {
+      name: data.featured_example_name,
+      cityLabel: data.featured_example_city_label,
+      photoUrl: data.featured_example_photo_url,
+      updatedAt: data.featured_example_updated_at,
     },
   };
 }

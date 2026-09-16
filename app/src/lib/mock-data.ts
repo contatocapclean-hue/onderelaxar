@@ -122,6 +122,12 @@ export const MOCK_SITE_SETTINGS: SiteSettings = {
     mediaType: "image",
     updatedAt: new Date(Date.now() - 10 * 3600000).toISOString(),
   },
+  featuredExample: {
+    name: "Ana Souza",
+    cityLabel: "Salvador (BA)",
+    photoUrl: seededPhoto("onde-relaxar-exemplo-destaque", 600, 800),
+    updatedAt: new Date(Date.now() - 10 * 3600000).toISOString(),
+  },
 };
 
 // Perfis extras usados apenas na área administrativa de demonstração, para
