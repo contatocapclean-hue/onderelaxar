@@ -193,20 +193,14 @@ function mapRow(row: any): ProfessionalProfile {
  * `limit`, a ordem é sorteada a cada chamada (rodízio) — assim nenhum
  * profissional fica sempre por cima só por ter ativado o destaque mais
  * recentemente; todo mundo tem a mesma chance de aparecer primeiro em
- * qualquer visita. Enquanto não há ninguém em destaque, caímos para os
- * últimos cadastrados — mas o rodízio de ordem continua valendo aqui
- * também, senão essa lista de "recentes" ficaria sempre na mesma ordem
- * fixa pra todo mundo. */
+ * qualquer visita. Sem fallback para "últimos cadastrados": destaque só
+ * aparece pra quem realmente pagou por ele. Enquanto ninguém pagar, a home
+ * mostra só o card de exemplo configurado pelo admin (ver `featuredExample`
+ * em SiteSettings e `buildFeaturedExampleProfile` em lib/utils). */
 export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalProfile[]> {
   if (!isSupabaseConfigured()) {
     const featured = MOCK_PROFESSIONALS.filter((p) => p.isFeatured);
-    if (featured.length) return shuffleArray(featured).slice(0, limit);
-    // Enquanto nenhum profissional estiver marcado como destaque, mostramos
-    // os últimos cadastrados no lugar (também com rodízio de ordem).
-    const recent = [...MOCK_PROFESSIONALS]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
-    return shuffleArray(recent);
+    return shuffleArray(featured).slice(0, limit);
   }
 
   const supabase = await createClient();
@@ -223,18 +217,7 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
     .or(`featured_until.is.null,featured_until.gt.${nowIso}`)
     .order("created_at", { ascending: false });
 
-  if (featuredData && featuredData.length) return shuffleArray(featuredData.map(mapRow)).slice(0, limit);
-
-  // Enquanto nenhum profissional estiver marcado como destaque, mostramos
-  // os últimos cadastrados no lugar (também com rodízio de ordem).
-  const { data: recentData } = await supabase!
-    .from("professional_profiles")
-    .select(PROFILE_SELECT)
-    .eq("profile_status", "published")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  return shuffleArray((recentData ?? []).map(mapRow));
+  return shuffleArray((featuredData ?? []).map(mapRow)).slice(0, limit);
 }
 
 /** Demais profissionais publicados, fora dos já exibidos em destaque —
