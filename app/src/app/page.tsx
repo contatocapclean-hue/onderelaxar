@@ -14,6 +14,7 @@ import {
   getSiteSettings,
 } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/mock-data";
+import { buildFeaturedExampleProfile } from "@/lib/utils";
 
 export default async function Home() {
   const [cities, categories, featured, citiesWithCounts, settings, stories] = await Promise.all([
@@ -56,25 +57,39 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Profissionais em destaque */}
-      <section className="bg-beige-soft pb-16 pt-10 sm:pb-20 sm:pt-12">
-        <div className="container-page">
-          <div className="mb-8 flex items-end justify-between">
-            <h2 className="font-display text-2xl text-foreground sm:text-3xl">
-              Profissionais em destaque
-            </h2>
+      {/* Profissionais em destaque — só entram aqui quem realmente pagou
+       * pelo destaque (getFeaturedProfessionals não tem mais fallback pra
+       * "recentes"). Enquanto ninguém pagar, mostramos só o card de
+       * exemplo configurado pelo admin em Configurações; se nem esse card
+       * existir ainda (sem foto cadastrada), a seção toda some. */}
+      {(featured.length > 0 || settings.featuredExample.photoUrl) && (
+        <section className="bg-beige-soft pb-16 pt-10 sm:pb-20 sm:pt-12">
+          <div className="container-page">
+            <div className="mb-8 flex items-end justify-between">
+              <h2 className="font-display text-2xl text-foreground sm:text-3xl">
+                Profissionais em destaque
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {featured.length > 0 ? (
+                featured.map((p) => (
+                  <ProfessionalCard
+                    key={p.id}
+                    professional={p}
+                    imageAspectClassName="aspect-[3/4] sm:aspect-[4/5]"
+                  />
+                ))
+              ) : (
+                <ProfessionalCard
+                  professional={buildFeaturedExampleProfile(settings.featuredExample)}
+                  imageAspectClassName="aspect-[3/4] sm:aspect-[4/5]"
+                  disabled
+                />
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {featured.map((p) => (
-              <ProfessionalCard
-                key={p.id}
-                professional={p}
-                imageAspectClassName="aspect-[3/4] sm:aspect-[4/5]"
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Todas as outras profissionais */}
       {others.length > 0 && (
@@ -84,7 +99,7 @@ export default async function Home() {
               Todas as outras profissionais
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {others.map((p) => (
               <ProfessionalMiniCard key={p.id} professional={p} />
             ))}

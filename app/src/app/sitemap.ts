@@ -1,12 +1,16 @@
 import type { MetadataRoute } from "next";
-import { getAllCitiesWithCounts, getFeaturedProfessionals } from "@/lib/data";
+import { getAllCitiesWithCounts, getOtherProfessionals } from "@/lib/data";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://exemplo-onderelaxar.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Usamos getOtherProfessionals (sem excluir ninguém) em vez de
+  // getFeaturedProfessionals: o sitemap precisa listar todos os perfis
+  // publicados, e destaque deixou de servir como proxy para "recentes" —
+  // agora só reflete quem realmente pagou pelo destaque.
   const [cities, professionals] = await Promise.all([
     getAllCitiesWithCounts(),
-    getFeaturedProfessionals(100),
+    getOtherProfessionals([], 500),
   ]);
 
   // Só entram no sitemap as cidades que já têm pelo menos um profissional
