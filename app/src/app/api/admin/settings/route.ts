@@ -22,6 +22,17 @@ export async function PATCH(request: NextRequest) {
     updates.system_story_updated_at = body.systemStoryMediaUrl ? new Date().toISOString() : null;
   }
 
+  // Card de exemplo do destaque (nome, cidade e foto), mostrado no painel
+  // das profissionais — nome/cidade podem ser strings vazias (limpar
+  // campo), então checamos por "string" e não truthiness.
+  if (typeof body.featuredExampleName === "string") updates.featured_example_name = body.featuredExampleName;
+  if (typeof body.featuredExampleCityLabel === "string")
+    updates.featured_example_city_label = body.featuredExampleCityLabel;
+  if (typeof body.featuredExamplePhotoUrl !== "undefined") {
+    updates.featured_example_photo_url = body.featuredExamplePhotoUrl;
+    updates.featured_example_updated_at = new Date().toISOString();
+  }
+
   const { error } = await result.supabase.from("site_settings").update(updates).eq("id", 1);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
