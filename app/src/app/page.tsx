@@ -64,9 +64,13 @@ export default async function Home() {
               Profissionais em destaque
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {featured.map((p) => (
-              <ProfessionalCard key={p.id} professional={p} />
+              <ProfessionalCard
+                key={p.id}
+                professional={p}
+                imageAspectClassName="aspect-[3/4] sm:aspect-[4/5]"
+              />
             ))}
           </div>
         </div>
@@ -80,7 +84,7 @@ export default async function Home() {
               Todas as outras profissionais
             </h2>
           </div>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
             {others.map((p) => (
               <ProfessionalMiniCard key={p.id} professional={p} />
             ))}
