@@ -7,7 +7,7 @@ import { ServicosForm } from "./servicos-form";
 import { LocalForm } from "./local-form";
 import { ContatosForm } from "./contatos-form";
 import { DestaqueStoriesForm } from "./destaque-stories-form";
-import type { City, ProfessionalProfile, ServiceCategory, Story, WalletPricing } from "@/lib/types";
+import type { City, ProfessionalProfile, ServiceCategory, SiteSettings, Story, WalletPricing } from "@/lib/types";
 
 const TABS = [
   { key: "dados", label: "Dados" },
@@ -28,6 +28,7 @@ export function PerfilTabs({
   categories,
   pricing,
   stories,
+  featuredExample,
   initialTab,
 }: {
   profile: ProfessionalProfile;
@@ -35,6 +36,7 @@ export function PerfilTabs({
   categories: ServiceCategory[];
   pricing: WalletPricing;
   stories: Story[];
+  featuredExample: SiteSettings["featuredExample"];
   initialTab?: string;
 }) {
   const [active, setActive] = useState<TabKey>(isTabKey(initialTab) ? initialTab : "dados");
@@ -64,7 +66,7 @@ export function PerfilTabs({
         {/* Destaque e Stories ficam num bloco separado, acima dos campos de
          * dados: antes ficavam escondidos dentro da Carteira e passavam
          * despercebidos pelas profissionais. */}
-        <DestaqueStoriesForm profile={profile} pricing={pricing} stories={stories} />
+        <DestaqueStoriesForm profile={profile} pricing={pricing} stories={stories} featuredExample={featuredExample} />
         <PerfilForm profile={profile} cities={cities} />
         {/* Contato deixou de ser uma aba própria e passou a ser mais um
          * bloco aqui em Dados, junto com o resto das informações do perfil. */}

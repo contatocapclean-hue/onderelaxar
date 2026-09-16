@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/mock-data";
 import { StoryPublishModal } from "@/components/story-publish-modal";
-import type { ProfessionalProfile, Story, WalletPricing } from "@/lib/types";
+import { ProfessionalCard } from "@/components/professional-card";
+import { buildFeaturedExampleProfile } from "@/lib/utils";
+import type { ProfessionalProfile, SiteSettings, Story, WalletPricing } from "@/lib/types";
 
 function formatCents(cents: number): string {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,10 +36,12 @@ export function DestaqueStoriesForm({
   profile,
   pricing,
   stories,
+  featuredExample,
 }: {
   profile: ProfessionalProfile;
   pricing: WalletPricing;
   stories: Story[];
+  featuredExample: SiteSettings["featuredExample"];
 }) {
   const router = useRouter();
   const demo = !isSupabaseConfigured();
@@ -125,6 +129,20 @@ export function DestaqueStoriesForm({
                 ? `Renovar por mais ${pricing.featuredDays} dias`
                 : "Ativar destaque"}
           </button>
+
+          {/* Exemplo de como fica um perfil em destaque — configurado pelo
+           * admin em Configurações. Só aparece depois que uma foto de
+           * exemplo é enviada, pra não mostrar um card vazio. */}
+          {featuredExample.photoUrl && (
+            <div className="mt-5 border-t border-border pt-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Veja como fica
+              </p>
+              <div className="w-full max-w-[200px]">
+                <ProfessionalCard professional={buildFeaturedExampleProfile(featuredExample)} disabled />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Stories */}
