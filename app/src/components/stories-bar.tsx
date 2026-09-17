@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Story } from "@/lib/types";
 import { BLUR_DATA_URL } from "@/lib/utils";
 
-const IMAGE_DURATION_MS = 5000;
+const IMAGE_DURATION_MS = 10000;
 
 interface Group {
   professionalId: string;
@@ -54,37 +54,51 @@ export function StoriesBar({ stories }: { stories: Story[] }) {
               onClick={() => setOpenGroupIndex(i)}
               className="flex shrink-0 flex-col items-center gap-1.5"
             >
-              <span className="rounded-full bg-gradient-to-tr from-primary to-accent-soft p-[2.5px]">
-                <span className="block rounded-full bg-background p-[2px]">
-                  <span className="relative block h-16 w-16 overflow-hidden rounded-full bg-beige-soft">
-                    {latest?.mediaType === "video" ? (
-                      <video
-                        src={latest.mediaUrl}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : latest?.mediaUrl ? (
-                      <Image
-                        src={latest.mediaUrl}
-                        alt=""
-                        fill
-                        loading="lazy"
-                        placeholder="blur"
-                        blurDataURL={BLUR_DATA_URL}
-                        sizes="64px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-lg text-foreground/60">
-                        {g.professionalName.charAt(0)}
-                      </span>
-                    )}
+              <span className="relative inline-block">
+                <span className="rounded-full bg-gradient-to-tr from-primary to-accent-soft p-[2.5px]">
+                  <span className="block rounded-full bg-background p-[2px]">
+                    <span className="relative block h-16 w-16 overflow-hidden rounded-full bg-beige-soft">
+                      {latest?.mediaType === "video" ? (
+                        <video
+                          src={latest.mediaUrl}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          preload="auto"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : latest?.mediaUrl ? (
+                        <Image
+                          src={latest.mediaUrl}
+                          alt=""
+                          fill
+                          loading="lazy"
+                          placeholder="blur"
+                          blurDataURL={BLUR_DATA_URL}
+                          sizes="64px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-lg text-foreground/60">
+                          {g.professionalName.charAt(0)}
+                        </span>
+                      )}
+                    </span>
                   </span>
                 </span>
+
+                {/* Contador de stories: só aparece quando há mais de um,
+                 * pra deixar claro (sem precisar abrir) que tem mais
+                 * conteúdo publicado por essa profissional. */}
+                {g.stories.length > 1 && (
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-background bg-story-accent px-1 text-[10px] font-bold leading-none text-foreground shadow-sm"
+                    aria-hidden
+                  >
+                    {g.stories.length}
+                  </span>
+                )}
               </span>
               <span className="max-w-[4.5rem] truncate text-xs text-foreground/80">
                 {g.professionalName.split(" ")[0]}
@@ -169,11 +183,18 @@ function StoryViewer({
 
       <div className="relative flex h-full max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-[var(--radius-md)] bg-black">
         <div className="absolute left-0 right-0 top-0 z-10 flex gap-1 p-2">
+          {/* Barrinhas de progresso: já visto fica sólido na cor de destaque
+           * dos stories, a atual roda um degradê animado (chama mais
+           * atenção pro story em andamento), as futuras ficam vazias. */}
           {group.stories.map((_, i) => (
-            <span key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30">
-              <span
-                className={`block h-full bg-white ${i < storyIndex ? "w-full" : i === storyIndex ? "w-full animate-pulse" : "w-0"}`}
-              />
+            <span key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
+              {i < storyIndex ? (
+                <span className="block h-full w-full bg-story-accent" />
+              ) : i === storyIndex ? (
+                <span className="story-progress-fill-current block h-full w-full" />
+              ) : (
+                <span className="block h-full w-0" />
+              )}
             </span>
           ))}
         </div>
