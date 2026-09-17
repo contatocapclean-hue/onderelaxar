@@ -54,8 +54,8 @@ export function StoriesBar({ stories }: { stories: Story[] }) {
               onClick={() => setOpenGroupIndex(i)}
               className="flex shrink-0 flex-col items-center gap-1.5"
             >
-              <span className="relative inline-block">
-                <span className="rounded-full bg-gradient-to-tr from-primary to-accent-soft p-[2.5px]">
+              <span className="relative block">
+                <span className="block rounded-full bg-gradient-to-tr from-primary to-accent-soft p-[2.5px]">
                   <span className="block rounded-full bg-background p-[2px]">
                     <span className="relative block h-16 w-16 overflow-hidden rounded-full bg-beige-soft">
                       {latest?.mediaType === "video" ? (
