@@ -20,6 +20,11 @@
   --color-border: #e6ded0;
   --color-gold: #b08d57; /* selo verificado / destaque */
 
+  /* Cor propositalmente fora da paleta do site (verde-cana vibrante) — usada
+   * só na barrinha de progresso e no contador dos Stories, pra chamar
+   * atenção nesse elemento específico em vez de se misturar com o resto. */
+  --color-story-accent: #9be22f;
+
   --radius-lg: 1.25rem;
   --radius-md: 0.875rem;
   --radius-sm: 0.5rem;
@@ -39,6 +44,7 @@
   --color-beige-soft: var(--color-beige-soft);
   --color-border: var(--color-border);
   --color-gold: var(--color-gold);
+  --color-story-accent: var(--color-story-accent);
   --font-sans: var(--font-inter);
   --font-serif: var(--font-fraunces);
 }
@@ -96,4 +102,19 @@ html, body {
 @keyframes skeleton-loading {
   0% { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
+}
+
+/* Barrinha de progresso do story atual, na barra de Stories da home: um
+ * degradê vibrante (verde-cana → amarelo → rosa) correndo continuamente,
+ * de propósito bem diferente da paleta discreta do resto do site, pra
+ * chamar atenção justamente nesse elemento. */
+.story-progress-fill-current {
+  background-image: linear-gradient(90deg, var(--color-story-accent), #ffd23d, #ff5da2, var(--color-story-accent));
+  background-size: 300% 100%;
+  animation: story-progress-shimmer 1.6s linear infinite;
+}
+
+@keyframes story-progress-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
 }
