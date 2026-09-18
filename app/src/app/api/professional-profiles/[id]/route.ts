@@ -98,6 +98,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         }))
       );
       await supabase!.from("professional_profiles").update({ profile_photo: dedupedPhotos[0].url }).eq("id", id);
+    } else {
+      // Galeria ficou vazia: sem isso, profile_photo continuava apontando
+      // pra última foto (já apagada), e ela "ressuscitava" sozinha na tela
+      // de Fotos no próximo carregamento — dava a impressão de que apagar
+      // não funcionava, quando na verdade a foto já tinha sido apagada da
+      // galeria, só o cache do avatar nunca era limpo.
+      await supabase!.from("professional_profiles").update({ profile_photo: null }).eq("id", id);
     }
   }
 
