@@ -7,6 +7,9 @@ import type { Story } from "@/lib/types";
 import { BLUR_DATA_URL } from "@/lib/utils";
 
 const IMAGE_DURATION_MS = 10000;
+// Duração usada pro vídeo só até o navegador informar a duração real dele
+// (evento onLoadedMetadata) — na prática dura frações de segundo.
+const FALLBACK_VIDEO_DURATION_MS = 15000;
 
 interface Group {
   professionalId: string;
@@ -55,7 +58,7 @@ export function StoriesBar({ stories }: { stories: Story[] }) {
               className="flex shrink-0 flex-col items-center gap-1.5"
             >
               <span className="relative block">
-                <span className="block rounded-full bg-gradient-to-tr from-primary to-accent-soft p-[2.5px]">
+                <span className="story-ring-gradient block rounded-full p-[2.5px]">
                   <span className="block rounded-full bg-background p-[2px]">
                     <span className="relative block h-16 w-16 overflow-hidden rounded-full bg-beige-soft">
                       {latest?.mediaType === "video" ? (
@@ -130,9 +133,22 @@ function StoryViewer({
 }) {
   const [groupIndex, setGroupIndex] = useState(initialIndex);
   const [storyIndex, setStoryIndex] = useState(0);
+  // Duração real de um vídeo, guardada por id do story assim que o
+  // navegador informa (onLoadedMetadata). Não usamos efeito pra "resetar"
+  // isso ao trocar de story — em vez disso, a duração ativa abaixo só usa
+  // esse valor quando ele bate com o story atual, senão cai no padrão. O
+  // timeout que passa pro próximo story continua sendo o onEnded do
+  // próprio vídeo, isso aqui é só pra sincronizar o visual da barrinha.
+  const [videoDuration, setVideoDuration] = useState<{ id: string; ms: number } | null>(null);
 
   const group = groups[groupIndex];
   const story = group?.stories[storyIndex];
+  const activeDurationMs =
+    story?.mediaType === "video"
+      ? videoDuration && videoDuration.id === story.id
+        ? videoDuration.ms
+        : FALLBACK_VIDEO_DURATION_MS
+      : IMAGE_DURATION_MS;
 
   function goNext() {
     if (!group) return;
@@ -183,15 +199,16 @@ function StoryViewer({
 
       <div className="relative flex h-full max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-[var(--radius-md)] bg-black">
         <div className="absolute left-0 right-0 top-0 z-10 flex gap-1 p-2">
-          {/* Barrinhas de progresso: já visto fica sólido na cor de destaque
-           * dos stories, a atual roda um degradê animado (chama mais
-           * atenção pro story em andamento), as futuras ficam vazias. */}
+          {/* Barrinhas de progresso: trilha branca, e o preenchimento roda o
+           * degradê vibrante dos stories. A já vista fica cheia (100%), a
+           * atual enche da esquerda pra direita em tempo real acompanhando
+           * a duração do story, e as futuras ficam vazias. */}
           {group.stories.map((_, i) => (
-            <span key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
+            <span key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-white">
               {i < storyIndex ? (
-                <span className="block h-full w-full bg-story-accent" />
+                <span className="story-progress-gradient block h-full w-full" />
               ) : i === storyIndex ? (
-                <span className="story-progress-fill-current block h-full w-full" />
+                <StoryProgressFill key={`${groupIndex}-${storyIndex}-${activeDurationMs}`} durationMs={activeDurationMs} />
               ) : (
                 <span className="block h-full w-0" />
               )}
@@ -222,6 +239,12 @@ function StoryViewer({
               muted
               playsInline
               onEnded={goNext}
+              onLoadedMetadata={(e) => {
+                const seconds = e.currentTarget.duration;
+                if (Number.isFinite(seconds) && seconds > 0) {
+                  setVideoDuration({ id: story.id, ms: seconds * 1000 });
+                }
+              }}
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
@@ -232,5 +255,33 @@ function StoryViewer({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Preenchimento da barrinha do story atual: começa em 0% (barra branca) e
+ * cresce até 100% em linha reta ao longo de `durationMs`, revelando o
+ * degradê conforme enche — como um carregamento de verdade, em vez de já
+ * aparecer cheio. Recebe uma `key` nova (grupo+story+duração) a cada troca
+ * de story pra sempre reiniciar do zero. */
+function StoryProgressFill({ durationMs }: { durationMs: number }) {
+  const [filled, setFilled] = useState(false);
+
+  useEffect(() => {
+    // Precisa de um tick entre montar com width 0% e pedir 100% pra o
+    // navegador realmente animar a transição em vez de pular direto pro fim.
+    const raf = requestAnimationFrame(() => setFilled(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <span
+      className="story-progress-gradient block h-full"
+      style={{
+        width: filled ? "100%" : "0%",
+        transitionProperty: "width",
+        transitionTimingFunction: "linear",
+        transitionDuration: `${durationMs}ms`,
+      }}
+    />
   );
 }
