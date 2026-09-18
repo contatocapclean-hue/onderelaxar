@@ -6,6 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/mock-data";
 import type { ProfessionalProfile } from "@/lib/types";
 
+type WorkingPhoto = { url: string; kind: "profile" | "venue" | "gallery"; order: number };
+
+/** Fotos e capa: cada ação (adicionar, remover, destacar, trocar capa) salva
+ * sozinha na hora, sem precisar de um botão "Salvar" separado — antes era
+ * preciso lembrar de clicar em salvar depois de apagar uma foto, e quem
+ * saía da página sem isso via a foto "voltar" como se apagar não tivesse
+ * funcionado. */
 export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
   // profile.profilePhoto é apenas um "cache" da URL da primeira foto da
   // galeria (profile.photos[0]) — não é uma foto separada. Antes, esse
@@ -13,7 +20,7 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
   // duplicada da foto principal a cada vez que o formulário era salvo
   // (e a duplicata ficava ainda maior a cada salvamento seguinte). Agora
   // deduplicamos por URL para montar a lista inicial com segurança.
-  const initialCandidates = [
+  const initialCandidates: WorkingPhoto[] = [
     ...(profile.profilePhoto ? [{ url: profile.profilePhoto, kind: "profile" as const, order: -1 }] : []),
     ...profile.photos.map((p) => ({ url: p.url, kind: p.kind, order: p.order })),
   ];
@@ -29,9 +36,10 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const demo = !isSupabaseConfigured();
 
   async function uploadToStorage(file: File, prefix: string): Promise<string | null> {
-    if (!isSupabaseConfigured()) {
+    if (demo) {
       return URL.createObjectURL(file);
     }
 
@@ -51,28 +59,75 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
     return pub.publicUrl;
   }
 
+  /** Salva imediatamente o estado dado (fotos + capa) no servidor. Sempre
+   * recebe as listas já atualizadas (em vez de ler do state) pra não correr
+   * risco de gravar uma versão desatualizada se o usuário clicar rápido em
+   * mais de uma ação em sequência. */
+  async function persist(nextPhotos: WorkingPhoto[], nextCover: string | null) {
+    if (demo) {
+      setMessage("Modo demonstração: alterações não são persistidas.");
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/professional-profiles/${profile.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photos: nextPhotos.map((p, i) => ({ ...p, order: i })),
+          coverPhoto: nextCover,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMessage(data.error ?? "Erro ao salvar. Tente novamente.");
+      }
+    } catch {
+      setMessage("Erro de conexão. Tente novamente.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
 
     setUploading(true);
     const url = await uploadToStorage(file, "gallery");
     setUploading(false);
-    if (url) setPhotos((prev) => [...prev, { url, kind: "gallery", order: prev.length }]);
+    if (!url) return;
+
+    const next = [...photos, { url, kind: "gallery" as const, order: photos.length }];
+    setPhotos(next);
+    await persist(next, coverPhoto);
   }
 
   async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
 
     setUploadingCover(true);
     const url = await uploadToStorage(file, "cover");
     setUploadingCover(false);
-    if (url) setCoverPhoto(url);
+    if (!url) return;
+
+    setCoverPhoto(url);
+    await persist(photos, url);
   }
 
-  function removePhoto(index: number) {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  async function removeCoverPhoto() {
+    setCoverPhoto(null);
+    await persist(photos, null);
+  }
+
+  async function removePhoto(index: number) {
+    const next = photos.filter((_, i) => i !== index);
+    setPhotos(next);
+    await persist(next, coverPhoto);
   }
 
   // Deixa a profissional escolher qual foto quer destacar como foto de
@@ -80,26 +135,13 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
   // enviadas. "Destacar" só reordena a lista, trazendo a foto escolhida
   // para a primeira posição — é essa posição que já era usada como foto
   // de perfil.
-  function makeProfilePhoto(index: number) {
-    setPhotos((prev) => {
-      if (index <= 0 || index >= prev.length) return prev;
-      const copy = [...prev];
-      const [chosen] = copy.splice(index, 1);
-      return [chosen, ...copy];
-    });
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    setMessage(null);
-    const res = await fetch(`/api/professional-profiles/${profile.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ photos: photos.map((p, i) => ({ ...p, order: i })), coverPhoto }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    setMessage(res.ok ? "Fotos atualizadas." : data.error ?? "Erro ao salvar.");
+  async function makeProfilePhoto(index: number) {
+    if (index <= 0 || index >= photos.length) return;
+    const copy = [...photos];
+    const [chosen] = copy.splice(index, 1);
+    const next = [chosen, ...copy];
+    setPhotos(next);
+    await persist(next, coverPhoto);
   }
 
   return (
@@ -123,10 +165,14 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
           <div className="flex flex-col items-start gap-2">
             <label className="cursor-pointer rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-beige-soft">
               {uploadingCover ? "Enviando…" : coverPhoto ? "Alterar capa" : "Carregar capa"}
-              <input type="file" accept="image/*" hidden onChange={handleCoverChange} />
+              <input type="file" accept="image/*" hidden onChange={handleCoverChange} disabled={uploadingCover} />
             </label>
             {coverPhoto && (
-              <button type="button" onClick={() => setCoverPhoto(null)} className="text-xs text-red-600 hover:underline">
+              <button
+                type="button"
+                onClick={removeCoverPhoto}
+                className="text-xs text-red-600 hover:underline"
+              >
                 Remover capa
               </button>
             )}
@@ -134,10 +180,14 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-muted-foreground">
+      <p className="mb-1 text-sm text-muted-foreground">
         A foto marcada como &quot;Perfil&quot; é usada como avatar do seu perfil. Clique na estrela de outra foto
         para destacá-la no lugar.
-        {!isSupabaseConfigured() && " (modo demonstração: alterações não são persistidas)"}
+      </p>
+      <p className="mb-4 text-xs text-muted-foreground">
+        {demo
+          ? "Modo demonstração: alterações não são persistidas."
+          : "Cada ação aqui (adicionar, apagar, destacar ou trocar a capa) já salva sozinha na hora — não precisa de um botão \"Salvar\"."}
       </p>
       <div className="flex flex-wrap gap-3">
         {photos.map((p, i) => (
@@ -146,7 +196,7 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
             <button
               onClick={() => removePhoto(i)}
               aria-label="Remover foto"
-              className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+              className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80"
             >
               ×
             </button>
@@ -169,17 +219,14 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
         ))}
         <label className="flex h-24 w-24 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-dashed border-border text-xs text-muted-foreground hover:bg-beige-soft">
           {uploading ? "Enviando…" : "+ Foto"}
-          <input type="file" accept="image/*" hidden onChange={handleFileChange} />
+          <input type="file" accept="image/*" hidden onChange={handleFileChange} disabled={uploading} />
         </label>
       </div>
-      {message && <p className="mt-4 text-sm text-primary">{message}</p>}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="mt-4 w-fit rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
-      >
-        {saving ? "Salvando…" : "Salvar fotos"}
-      </button>
+      {(saving || message) && (
+        <p className="mt-4 text-sm text-foreground/80" role="status">
+          {saving ? "Salvando…" : message}
+        </p>
+      )}
     </div>
   );
 }
