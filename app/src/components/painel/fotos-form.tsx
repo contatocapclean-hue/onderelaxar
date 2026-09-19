@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/mock-data";
 import type { ProfessionalProfile } from "@/lib/types";
@@ -38,6 +38,52 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
   const [message, setMessage] = useState<string | null>(null);
   const demo = !isSupabaseConfigured();
 
+  // Fonte da verdade "ao vivo" pra fotos/capa, separada do state do React.
+  // Cada ação aqui salva sozinha (sem botão "Salvar"), e o PATCH do servidor
+  // sempre substitui a galeria inteira — então, se duas ações acontecerem
+  // perto uma da outra (ex.: apagar uma foto enquanto o upload de outra
+  // ainda está em andamento, ou duas chamadas de salvar concorrentes cuja
+  // resposta chega fora de ordem), um envio baseado num valor "capturado"
+  // antigo podia reescrever a galeria e ressuscitar uma foto já apagada.
+  // Os refs guardam sempre o valor mais atual pra cada ação ler antes de
+  // montar o próximo estado, e a fila abaixo garante um envio por vez —
+  // nunca dois PATCHs de fotos em voo ao mesmo tempo.
+  const photosRef = useRef(initial);
+  const coverRef = useRef<string | null>(profile.coverPhoto);
+  const saveLoopRunning = useRef(false);
+  const savePending = useRef(false);
+
+  function applyPhotos(next: WorkingPhoto[]) {
+    photosRef.current = next;
+    setPhotos(next);
+  }
+
+  function applyCover(next: string | null) {
+    coverRef.current = next;
+    setCoverPhoto(next);
+  }
+
+  /** Marca que existe uma versão nova pra salvar e garante que só exista um
+   * loop de salvamento rodando por vez. Se um salvamento já estiver em
+   * andamento quando outra ação acontece, essa ação só marca "pendente" —
+   * o loop, ao terminar o envio atual, dispara mais um envio lendo os refs
+   * de novo (então sempre acaba mandando o estado mais recente, nunca um
+   * envio antigo por cima de um mais novo). */
+  function scheduleSave() {
+    savePending.current = true;
+    if (saveLoopRunning.current) return;
+    saveLoopRunning.current = true;
+    void runSaveLoop();
+  }
+
+  async function runSaveLoop() {
+    while (savePending.current) {
+      savePending.current = false;
+      await persist(photosRef.current, coverRef.current);
+    }
+    saveLoopRunning.current = false;
+  }
+
   async function uploadToStorage(file: File, prefix: string): Promise<string | null> {
     if (demo) {
       return URL.createObjectURL(file);
@@ -59,10 +105,9 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
     return pub.publicUrl;
   }
 
-  /** Salva imediatamente o estado dado (fotos + capa) no servidor. Sempre
-   * recebe as listas já atualizadas (em vez de ler do state) pra não correr
-   * risco de gravar uma versão desatualizada se o usuário clicar rápido em
-   * mais de uma ação em sequência. */
+  /** Envia ao servidor o estado dado (fotos + capa). Só é chamada pelo loop
+   * de salvamento acima, nunca diretamente — assim nunca há duas chamadas
+   * concorrentes disputando pra ver qual termina por último. */
   async function persist(nextPhotos: WorkingPhoto[], nextCover: string | null) {
     if (demo) {
       setMessage("Modo demonstração: alterações não são persistidas.");
@@ -100,9 +145,15 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
     setUploading(false);
     if (!url) return;
 
-    const next = [...photos, { url, kind: "gallery" as const, order: photos.length }];
-    setPhotos(next);
-    await persist(next, coverPhoto);
+    // Lê photosRef (não o "photos" capturado no início desta função) porque
+    // o upload acima é assíncrono e pode levar vários segundos — tempo de
+    // sobra pra profissional apagar outra foto nesse meio tempo. Se
+    // usássemos o "photos" da closure, a lista antiga (ainda com a foto já
+    // apagada) seria reenviada aqui, ressuscitando-a.
+    const current = photosRef.current;
+    const next = [...current, { url, kind: "gallery" as const, order: current.length }];
+    applyPhotos(next);
+    scheduleSave();
   }
 
   async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -115,19 +166,19 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
     setUploadingCover(false);
     if (!url) return;
 
-    setCoverPhoto(url);
-    await persist(photos, url);
+    applyCover(url);
+    scheduleSave();
   }
 
   async function removeCoverPhoto() {
-    setCoverPhoto(null);
-    await persist(photos, null);
+    applyCover(null);
+    scheduleSave();
   }
 
   async function removePhoto(index: number) {
-    const next = photos.filter((_, i) => i !== index);
-    setPhotos(next);
-    await persist(next, coverPhoto);
+    const next = photosRef.current.filter((_, i) => i !== index);
+    applyPhotos(next);
+    scheduleSave();
   }
 
   // Deixa a profissional escolher qual foto quer destacar como foto de
@@ -136,12 +187,13 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
   // para a primeira posição — é essa posição que já era usada como foto
   // de perfil.
   async function makeProfilePhoto(index: number) {
-    if (index <= 0 || index >= photos.length) return;
-    const copy = [...photos];
+    const current = photosRef.current;
+    if (index <= 0 || index >= current.length) return;
+    const copy = [...current];
     const [chosen] = copy.splice(index, 1);
     const next = [chosen, ...copy];
-    setPhotos(next);
-    await persist(next, coverPhoto);
+    applyPhotos(next);
+    scheduleSave();
   }
 
   return (
