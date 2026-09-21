@@ -5,6 +5,7 @@ import { Field } from "@/components/form-fields";
 import { ProfessionalCard } from "@/components/professional-card";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/mock-data";
+import { compressImageIfNeeded } from "@/lib/image-compress";
 import { buildFeaturedExampleProfile } from "@/lib/utils";
 import type { SiteSettings } from "@/lib/types";
 
@@ -84,8 +85,9 @@ export function SiteSettingsForm({ initialSettings }: { initialSettings: SiteSet
 
     // Reaproveita o bucket "story-media" (já público e liberado só pra
     // admin nessa tela) em vez de criar um bucket novo só pra isso.
-    const path = `${user.id}/exemplo-destaque-${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase!.storage.from("story-media").upload(path, file);
+    const compressed = await compressImageIfNeeded(file);
+    const path = `${user.id}/exemplo-destaque-${Date.now()}-${compressed.name}`;
+    const { error: uploadError } = await supabase!.storage.from("story-media").upload(path, compressed);
     if (uploadError) {
       setFeaturedExampleUploading(false);
       setFeaturedExampleMessage(uploadError.message);
@@ -129,6 +131,10 @@ export function SiteSettingsForm({ initialSettings }: { initialSettings: SiteSet
     const mediaType = file.type.startsWith("video/") ? "video" : "image";
     setStoryUploading(true);
 
+    // Vídeo passa direto (canvas não comprime vídeo); imagem é redimensionada
+    // e comprimida antes do envio, pelo mesmo motivo das outras telas.
+    const upload = mediaType === "image" ? await compressImageIfNeeded(file) : file;
+
     const supabase = createClient();
     const {
       data: { user },
@@ -139,8 +145,8 @@ export function SiteSettingsForm({ initialSettings }: { initialSettings: SiteSet
       return;
     }
 
-    const path = `${user.id}/sistema-${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase!.storage.from("story-media").upload(path, file);
+    const path = `${user.id}/sistema-${Date.now()}-${upload.name}`;
+    const { error: uploadError } = await supabase!.storage.from("story-media").upload(path, upload);
     if (uploadError) {
       setStoryUploading(false);
       setStoryMessage(uploadError.message);
