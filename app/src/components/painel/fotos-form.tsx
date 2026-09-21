@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/mock-data";
+import { compressImageIfNeeded } from "@/lib/image-compress";
 import type { ProfessionalProfile } from "@/lib/types";
 
 type WorkingPhoto = { url: string; kind: "profile" | "venue" | "gallery"; order: number };
@@ -89,14 +90,20 @@ export function FotosForm({ profile }: { profile: ProfessionalProfile }) {
       return URL.createObjectURL(file);
     }
 
+    // Redimensiona/comprime antes de enviar — sem isso, uma foto de câmera
+    // ou gerada por IA em altíssima resolução (já vimos casos de 20+ MB)
+    // vai parar direto no Supabase e é servida assim, sem compressão nenhuma,
+    // toda vez que o perfil é visitado.
+    const compressed = await compressImageIfNeeded(file);
+
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase!.auth.getUser();
     if (!user) return null;
 
-    const path = `${user.id}/${prefix}-${Date.now()}-${file.name}`;
-    const { error } = await supabase!.storage.from("profile-photos").upload(path, file);
+    const path = `${user.id}/${prefix}-${Date.now()}-${compressed.name}`;
+    const { error } = await supabase!.storage.from("profile-photos").upload(path, compressed);
     if (error) {
       setMessage(error.message);
       return null;
