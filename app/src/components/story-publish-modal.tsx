@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { compressImageIfNeeded } from "@/lib/image-compress";
 
 function formatCents(cents: number): string {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -107,8 +108,11 @@ export function StoryPublishModal({
       return;
     }
 
-    const path = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase!.storage.from("story-media").upload(path, file);
+    // Vídeo passa direto (canvas não comprime vídeo); imagem é redimensionada
+    // e comprimida antes do envio, pra não pesar no egress do Supabase.
+    const upload = mediaType === "image" ? await compressImageIfNeeded(file) : file;
+    const path = `${user.id}/${Date.now()}-${upload.name}`;
+    const { error: uploadError } = await supabase!.storage.from("story-media").upload(path, upload);
     if (uploadError) {
       setUploading(false);
       setMessage(uploadError.message);
