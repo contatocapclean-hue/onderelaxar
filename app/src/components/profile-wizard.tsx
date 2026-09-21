@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/mock-data";
+import { compressImageIfNeeded } from "@/lib/image-compress";
 import { Field, ContactField } from "@/components/form-fields";
 import type { City, ServiceCategory, Visibility } from "@/lib/types";
 
@@ -81,8 +82,9 @@ export function ProfileWizard({ cities, categories }: Props) {
       return;
     }
 
-    const path = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase!.storage.from("profile-photos").upload(path, file);
+    const compressed = await compressImageIfNeeded(file);
+    const path = `${user.id}/${Date.now()}-${compressed.name}`;
+    const { error: uploadError } = await supabase!.storage.from("profile-photos").upload(path, compressed);
     setUploading(false);
 
     if (uploadError) {
