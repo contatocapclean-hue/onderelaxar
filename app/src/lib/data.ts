@@ -222,31 +222,37 @@ export async function getFeaturedProfessionals(limit = 8): Promise<ProfessionalP
 
 /** Demais profissionais publicados, fora dos já exibidos em destaque —
  * usado na home para a seção "Todas as outras profissionais", com cards
- * menores que os de destaque. */
+ * menores que os de destaque. A ordem é sorteada a cada chamada (rodÝzio),
+ * em vez de seguir sempre a ordem de cadastro — assim quem se cadastrou há
+ * mais tempo também tem chance de aparecer nas primeiras posições, e não
+ * fica sempre por último (ou sempre no topo, se a ordenação fosse pelo mais
+ * recente) só por causa da data de cadastro. */
 export async function getOtherProfessionals(
   excludeIds: string[],
   limit = 24
 ): Promise<ProfessionalProfile[]> {
   if (!isSupabaseConfigured()) {
-    return MOCK_PROFESSIONALS.filter((p) => !excludeIds.includes(p.id))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
+    return shuffleArray(MOCK_PROFESSIONALS.filter((p) => !excludeIds.includes(p.id))).slice(0, limit);
   }
 
   const supabase = await createClient();
+  // Sem .limit() aqui de propósito, pelo mesmo motivo do destaque acima:
+  // buscamos todas as publicadas (menos as já exibidas em destaque) pra
+  // poder sortear entre todas antes de cortar para `limit` — se
+  // limitássemos a query (e ela ainda estivesse ordenada por data), o
+  // rodÝzio só rodaria entre as últimas cadastradas, deixando quem se
+  // cadastrou há mais tempo sempre de fora da home.
   let query = supabase!
     .from("professional_profiles")
     .select(PROFILE_SELECT)
-    .eq("profile_status", "published")
-    .order("created_at", { ascending: false })
-    .limit(limit + excludeIds.length);
+    .eq("profile_status", "published");
 
   if (excludeIds.length) {
     query = query.not("id", "in", `(${excludeIds.join(",")})`);
   }
 
   const { data } = await query;
-  return (data ?? []).map(mapRow).slice(0, limit);
+  return shuffleArray((data ?? []).map(mapRow)).slice(0, limit);
 }
 
 export async function getCityBySlug(slug: string): Promise<City | null> {
@@ -303,9 +309,11 @@ export async function getProfessionalsByCity(
         ];
         break;
       default:
-        results = [...results].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        // Sem ordenação explícita escolhida pelo visitante: sorteia a
+        // ordem a cada chamada (rodízio), em vez de sempre mostrar por
+        // ordem de cadastro — assim quem se cadastrou há mais tempo
+        // também aparece entre os primeiros de vez em quando.
+        results = shuffleArray(results);
     }
 
     return results;
@@ -359,6 +367,13 @@ export async function getProfessionalsByCity(
       ...shuffleArray(results.filter((p) => p.isFeatured)),
       ...results.filter((p) => !p.isFeatured),
     ];
+  }
+  if (!filters.sort) {
+    // Sem ordenação explícita escolhida pelo visitante: sorteia a ordem a
+    // cada chamada (rodÝzio), em vez de sempre mostrar por ordem de
+    // cadastro — assim quem se cadastrou há mais tempo também aparece
+    // entre os primeiros de vez em quando.
+    results = shuffleArray(results);
   }
 
   return results;
